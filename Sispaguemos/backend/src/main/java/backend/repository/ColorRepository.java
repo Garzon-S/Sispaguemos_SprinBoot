@@ -1,6 +1,6 @@
 package backend.repository;
 
-import backend.model.Color; // Asegúrate de tener tu modelo Color creado
+import backend.model.Color;
 import org.springframework.data.jpa.repository.JpaRepository;
 import org.springframework.stereotype.Repository;
 
