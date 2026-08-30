@@ -1,0 +1,433 @@
+/* ============================================
+   MOVIMIENTOS DE INVENTARIO - ESTILOS
+   ============================================ */
+
+/* ---------- CONTENEDOR PRINCIPAL ---------- */
+.movimientos-content {
+  width: 100%;
+  padding: 0;
+}
+
+/* ---------- HEADER DEL MÓDULO ---------- */
+.movimientos-header {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  margin-bottom: 24px;
+  flex-wrap: wrap;
+  gap: 12px;
+}
+
+.movimientos-header h2 {
+  font-size: 22px;
+  font-weight: 600;
+  color: #2d1a20;
+  letter-spacing: -0.3px;
+}
+
+.movimientos-header .btn-agregar {
+  background: #d81b60;
+  color: #fff;
+  border: none;
+  padding: 10px 28px;
+  border-radius: 30px;
+  font-weight: 600;
+  font-size: 13px;
+  cursor: pointer;
+  transition: all 0.2s;
+  box-shadow: 0 4px 12px rgba(216, 27, 96, 0.20);
+}
+
+.movimientos-header .btn-agregar:hover {
+  background: #c2185b;
+  transform: translateY(-1px);
+}
+
+/* ---------- TABLA DE MOVIMIENTOS ---------- */
+.movimientos-table-container {
+  background: #fff;
+  border-radius: 20px;
+  padding: 20px 24px;
+  box-shadow: 0 2px 12px rgba(0, 0, 0, 0.04);
+  border: 1px solid #f0e4e8;
+  overflow-x: auto;
+  margin-top: 8px;
+}
+
+.movimientos-table {
+  width: 100%;
+  border-collapse: collapse;
+  font-size: 14px;
+}
+
+.movimientos-table thead th {
+  padding: 14px 16px;
+  text-align: left;
+  border-bottom: 2px solid #f0e4e8;
+  color: #5a3a42;
+  font-weight: 600;
+  font-size: 12px;
+  text-transform: uppercase;
+  letter-spacing: 0.5px;
+}
+
+.movimientos-table tbody td {
+  padding: 14px 16px;
+  border-bottom: 1px solid #f5f0f2;
+  color: #2d1a20;
+  vertical-align: middle;
+}
+
+.movimientos-table tbody tr:last-child td {
+  border-bottom: none;
+}
+
+.movimientos-table tbody tr:hover {
+  background: #fcf8fa;
+}
+
+/* ---------- BADGES DE TIPO DE MOVIMIENTO ---------- */
+.badge-tipo {
+  display: inline-block;
+  padding: 4px 14px;
+  border-radius: 20px;
+  font-weight: 600;
+  font-size: 12px;
+  color: #fff;
+}
+
+.badge-entrada {
+  background: #2e7d32;
+}
+
+.badge-salida {
+  background: #c62828;
+}
+
+/* ---------- CANTIDAD ---------- */
+.cantidad-entrada {
+  color: #2e7d32;
+  font-weight: 700;
+}
+
+.cantidad-salida {
+  color: #c62828;
+  font-weight: 700;
+}
+
+/* ---------- BOTÓN VER CÓDIGO ---------- */
+.btn-ver-codigo {
+  padding: 4px 14px;
+  background: #6c757d;
+  color: #fff;
+  border: none;
+  border-radius: 20px;
+  cursor: pointer;
+  font-size: 11px;
+  font-weight: 500;
+  transition: background 0.2s;
+  margin-left: 10px;
+}
+
+.btn-ver-codigo:hover {
+  background: #5a6268;
+}
+
+/* ---------- SIN DATOS ---------- */
+.sin-datos {
+  text-align: center;
+  padding: 40px 20px;
+  color: #b0808e;
+  font-size: 15px;
+}
+
+/* ============================================
+   MODALES
+   ============================================ */
+
+/* ---------- OVERLAY MODAL ---------- */
+.modal-overlay {
+  position: fixed;
+  inset: 0;
+  background: rgba(0, 0, 0, 0.40);
+  backdrop-filter: blur(4px);
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  z-index: 1000;
+  padding: 20px;
+  animation: fadeIn 0.25s ease;
+}
+
+@keyframes fadeIn {
+  from { opacity: 0; }
+  to { opacity: 1; }
+}
+
+/* ---------- CONTENIDO MODAL ---------- */
+.modal-content {
+  background: #fff;
+  border-radius: 24px;
+  padding: 32px 36px;
+  max-width: 540px;
+  width: 100%;
+  max-height: 90vh;
+  overflow-y: auto;
+  box-shadow: 0 20px 60px rgba(0, 0, 0, 0.15);
+  animation: slideUp 0.3s ease;
+}
+
+@keyframes slideUp {
+  from { transform: translateY(20px); opacity: 0; }
+  to { transform: translateY(0); opacity: 1; }
+}
+
+.modal-header {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  padding-bottom: 16px;
+  border-bottom: 1px solid #f0e4e8;
+  margin-bottom: 20px;
+}
+
+.modal-header h3 {
+  font-size: 20px;
+  font-weight: 700;
+  color: #2d1a20;
+  margin: 0;
+}
+
+.modal-header .btn-cerrar-modal {
+  background: none;
+  border: none;
+  font-size: 24px;
+  color: #b0808e;
+  cursor: pointer;
+  width: 36px;
+  height: 36px;
+  border-radius: 50%;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  transition: background 0.2s;
+}
+
+.modal-header .btn-cerrar-modal:hover {
+  background: #f0e4e8;
+}
+
+/* ---------- ERROR EN MODAL ---------- */
+.modal-error {
+  background: #fce4ec;
+  color: #c62828;
+  padding: 12px 16px;
+  border-radius: 12px;
+  margin-bottom: 16px;
+  font-weight: 500;
+  font-size: 14px;
+}
+
+/* ---------- FORMULARIO MODAL ---------- */
+.modal-form .form-group {
+  margin-bottom: 18px;
+}
+
+.modal-form .form-group label {
+  display: block;
+  font-size: 12px;
+  font-weight: 600;
+  color: #5a3a42;
+  margin-bottom: 5px;
+  letter-spacing: 0.3px;
+}
+
+.modal-form .form-group select,
+.modal-form .form-group input {
+  width: 100%;
+  padding: 10px 14px;
+  border: 1px solid #e8d4da;
+  border-radius: 14px;
+  font-size: 14px;
+  background: #fcf8fa;
+  transition: border 0.2s, box-shadow 0.2s;
+  outline: none;
+  color: #2d1a20;
+  font-weight: 500;
+}
+
+.modal-form .form-group select:focus,
+.modal-form .form-group input:focus {
+  border-color: #d81b60;
+  box-shadow: 0 0 0 3px rgba(216, 27, 96, 0.08);
+}
+
+.modal-form .form-group select option {
+  color: #2d1a20;
+  background: #fff;
+}
+
+/* ---------- BOTONES FORMULARIO ---------- */
+.modal-actions {
+  display: flex;
+  justify-content: flex-end;
+  gap: 12px;
+  margin-top: 24px;
+  padding-top: 16px;
+  border-top: 1px solid #f0e4e8;
+}
+
+.btn-cancelar {
+  padding: 10px 24px;
+  background: #e8e0e4;
+  color: #5a3a42;
+  border: none;
+  border-radius: 30px;
+  font-weight: 600;
+  font-size: 14px;
+  cursor: pointer;
+  transition: background 0.2s;
+}
+
+.btn-cancelar:hover {
+  background: #d8d0d4;
+}
+
+.btn-guardar {
+  padding: 10px 28px;
+  background: #2e7d32;
+  color: #fff;
+  border: none;
+  border-radius: 30px;
+  font-weight: 600;
+  font-size: 14px;
+  cursor: pointer;
+  transition: all 0.2s;
+}
+
+.btn-guardar:hover {
+  background: #1b5e20;
+  transform: translateY(-1px);
+  box-shadow: 0 4px 12px rgba(46, 125, 50, 0.25);
+}
+
+/* ============================================
+   MODAL DE CÓDIGO DE BARRAS
+   ============================================ */
+.modal-codigo {
+  text-align: center;
+}
+
+.modal-codigo .codigo-titulo {
+  font-size: 18px;
+  font-weight: 700;
+  color: #2d1a20;
+  margin-bottom: 8px;
+}
+
+.modal-codigo .codigo-prenda {
+  color: #5a3a42;
+  margin: 12px 0 16px;
+}
+
+.modal-codigo .codigo-prenda strong {
+  color: #2d1a20;
+}
+
+.modal-codigo .codigo-barras {
+  background: #f8f4f7;
+  padding: 18px 20px;
+  border-radius: 12px;
+  border: 2px dashed #d0b0b8;
+  margin: 16px 0 20px;
+  font-size: 22px;
+  font-weight: 700;
+  letter-spacing: 3px;
+  color: #2d1a20;
+  font-family: 'Courier New', monospace;
+}
+
+.modal-codigo .btn-cerrar-codigo {
+  padding: 10px 32px;
+  background: #d81b60;
+  color: #fff;
+  border: none;
+  border-radius: 30px;
+  font-weight: 600;
+  font-size: 14px;
+  cursor: pointer;
+  transition: background 0.2s;
+}
+
+.modal-codigo .btn-cerrar-codigo:hover {
+  background: #c2185b;
+}
+
+/* ============================================
+   RESPONSIVE
+   ============================================ */
+@media (max-width: 768px) {
+  .movimientos-header {
+    flex-direction: column;
+    align-items: stretch;
+  }
+  
+  .movimientos-header h2 {
+    font-size: 19px;
+  }
+  
+  .movimientos-header .btn-agregar {
+    width: 100%;
+    text-align: center;
+  }
+  
+  .movimientos-table-container {
+    padding: 12px 16px;
+  }
+  
+  .movimientos-table thead th,
+  .movimientos-table tbody td {
+    padding: 10px 12px;
+    font-size: 12px;
+  }
+  
+  .modal-content {
+    padding: 24px 20px;
+    margin: 10px;
+  }
+  
+  .modal-actions {
+    flex-direction: column;
+  }
+  
+  .modal-actions button {
+    width: 100%;
+    justify-content: center;
+  }
+}
+
+@media (max-width: 480px) {
+  .movimientos-table {
+    font-size: 11px;
+  }
+  
+  .movimientos-table thead th,
+  .movimientos-table tbody td {
+    padding: 8px 10px;
+  }
+  
+  .badge-tipo {
+    font-size: 10px;
+    padding: 3px 10px;
+  }
+  
+  .btn-ver-codigo {
+    font-size: 10px;
+    padding: 3px 10px;
+  }
+  
+  .modal-codigo .codigo-barras {
+    font-size: 16px;
+    padding: 14px 16px;
+  }
+}

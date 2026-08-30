@@ -1,19 +1,39 @@
+// src/App.jsx
 import { BrowserRouter, Routes, Route } from 'react-router-dom';
-import Inicio from './views/Inicio';
+import Layout from './components/Layout';
+import Inicio from './views/Inicio'; // <--- Tu pantalla de inicio independiente
 import DashboardAdmin from './views/DashboardAdmin';
-import InventarioPrendas from './views/Prendas';
-import UsuariosPage from './views/Usuarios';
-import './App.css';
+import MovimientosInventario from './views/MovimientosInventarios'; 
+import Prendas from './views/Prendas';
+import Bodega from './views/Bodega';
+import Usuarios from './views/Usuarios';
+
+// Componente temporal para Ventas
+function Ventas() {
+  return (
+    <div style={{ padding: '40px', textAlign: 'center' }}>
+      <h2>Módulo de Ventas</h2>
+      <p>Gestión de ventas y pedidos</p>
+    </div>
+  );
+}
 
 function App() {
   return (
     <BrowserRouter>
-      {/* Ya no hay barra negra <nav> aquí, por lo que la interfaz lucirá exactamente como el diseño */}
       <Routes>
+        {/* 1. RUTA PRINCIPAL SIN LAYOUT (Pantalla limpia de Inicio) */}
         <Route path="/" element={<Inicio />} />
-        <Route path="/admin" element={<DashboardAdmin />} />
-        <Route path="/prendas" element={<InventarioPrendas />} />
-        <Route path="/usuarios" element={<UsuariosPage />} />
+
+        {/* 2. RUTAS DE ADMINISTRACIÓN CON EL LAYOUT (Menú lateral y barra superior) */}
+        <Route element={<Layout />}>
+          <Route path="/dashboard" element={<DashboardAdmin />} />
+          <Route path="/bodega" element={<Bodega />} />
+          <Route path="/prendas" element={<Prendas />} />
+          <Route path="/movimientos" element={<MovimientosInventario />} /> 
+          <Route path="/ventas" element={<Ventas />} />
+          <Route path="/usuarios" element={<Usuarios />} />
+        </Route>
       </Routes>
     </BrowserRouter>
   );

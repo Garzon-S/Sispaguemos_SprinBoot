@@ -4,20 +4,22 @@ import java.time.LocalDateTime;
 import com.fasterxml.jackson.annotation.JsonProperty;
 import jakarta.persistence.Column;
 import jakarta.persistence.Entity;
-import jakarta.persistence.GeneratedValue;
-import jakarta.persistence.GenerationType;
 import jakarta.persistence.Id;
 import jakarta.persistence.PrePersist;
 import jakarta.persistence.Table;
+import jakarta.validation.constraints.Max;
+import jakarta.validation.constraints.Min;
+import jakarta.validation.constraints.Size;
 
 @Entity
 @Table(name = "prenda")
 public class Prenda {
 
     @Id
-    @GeneratedValue(strategy = GenerationType.IDENTITY)
+    @JsonProperty("id_prenda")
     @Column(name = "id_prenda")
-    private Long idPrenda; // <- Cambiado a Long para que coincida con el controlador y la base de datos
+    @Size(min = 1, max = 25, message = "El código de la prenda debe tener máximo 25 caracteres")
+    private String idPrenda;
 
     @JsonProperty("nombre_prend")
     @Column(name = "nombre_prend", nullable = false)
@@ -33,10 +35,14 @@ public class Prenda {
 
     @JsonProperty("precio_venta")
     @Column(name = "precio_venta", nullable = false)
+    @Min(value = 5000, message = "El precio mínimo de venta es de $5,000")
+    @Max(value = 5000000, message = "El precio máximo de venta es de $5,000,000")
     private Double precioVenta;
 
     @JsonProperty("cantidad_disponible_venta")
     @Column(name = "cantidad_disponible_venta", nullable = false)
+    @Min(value = 0, message = "La cantidad no puede ser negativa")
+    @Max(value = 20, message = "El canal web permite un máximo de 20 prendas por producto")
     private Integer cantidadDisponibleVenta;
 
     @Column(name = "estado", nullable = false)
@@ -46,7 +52,7 @@ public class Prenda {
     @Column(name = "fecha_registro", nullable = false)
     private LocalDateTime fechaRegistro;
 
-@JsonProperty("imagen_prend")
+    @JsonProperty("imagen_prend")
     @Column(name = "imagen_prend", columnDefinition = "LONGTEXT")
     private String imagenPrend;
 
@@ -71,9 +77,9 @@ public class Prenda {
         }
     }
 
-    // Getters y Setters usando Long
-    public Long getIdPrenda() { return idPrenda; }
-    public void setIdPrenda(Long idPrenda) { this.idPrenda = idPrenda; }
+    // Getters y Setters
+    public String getIdPrenda() { return idPrenda; }
+    public void setIdPrenda(String idPrenda) { this.idPrenda = idPrenda; }
 
     public String getNombrePrend() { return nombrePrend; }
     public void setNombrePrend(String nombrePrend) { this.nombrePrend = nombrePrend; }

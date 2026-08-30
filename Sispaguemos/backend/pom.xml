@@ -30,6 +30,10 @@
 		<java.version>17</java.version>
 	</properties>
 	<dependencies>
+	<dependency>
+    <groupId>org.springframework.boot</groupId>
+    <artifactId>spring-boot-starter-validation</artifactId>
+</dependency>
         <!-- Cambiamos JDBC por JPA para usar @Entity, JpaRepository y los métodos estándar -->
         <dependency>
             <groupId>org.springframework.boot</groupId>
