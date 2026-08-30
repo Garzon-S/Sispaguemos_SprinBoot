@@ -7,15 +7,20 @@ export const obtenerUsuarios = async () => {
 };
 
 export const crearUsuario = async (usuario) => {
-  const formData = new FormData();
-  formData.append('primerNom', usuario.primerNom);
-  formData.append('segundNom', usuario.segundNom);
-  formData.append('primerApelli', usuario.primerApelli);
-  formData.append('segundApelli', usuario.segundApelli);
-  formData.append('correo', usuario.correo);
-  formData.append('estado', usuario.estado);
-  if (usuario.imagen) {
-    formData.append('imagen', usuario.imagen);
+  // Si el componente ya le pasa un FormData directamente, lo enviamos de una vez
+  let formData = usuario;
+  if (!(usuario instanceof FormData)) {
+    formData = new FormData();
+    formData.append('primerNom', usuario.primerNom || '');
+    formData.append('segundNom', usuario.segundNom || '');
+    formData.append('primerApelli', usuario.primerApelli || '');
+    formData.append('segundApelli', usuario.segundApelli || '');
+    formData.append('correo', usuario.correo || '');
+    formData.append('estado', usuario.estado !== undefined ? usuario.estado : 1);
+    
+    if (usuario.imagenPerfil instanceof File) {
+      formData.append('imagenPerfil', usuario.imagenPerfil);
+    }
   }
 
   const res = await fetch(API_URL, {
@@ -27,15 +32,19 @@ export const crearUsuario = async (usuario) => {
 };
 
 export const actualizarUsuario = async (id, usuario) => {
-  const formData = new FormData();
-  formData.append('primerNom', usuario.primerNom);
-  formData.append('segundNom', usuario.segundNom);
-  formData.append('primerApelli', usuario.primerApelli);
-  formData.append('segundApelli', usuario.segundApelli);
-  formData.append('correo', usuario.correo);
-  formData.append('estado', usuario.estado);
-  if (usuario.imagen && usuario.imagen instanceof File) {
-    formData.append('imagen', usuario.imagen);
+  let formData = usuario;
+  if (!(usuario instanceof FormData)) {
+    formData = new FormData();
+    formData.append('primerNom', usuario.primerNom || '');
+    formData.append('segundNom', usuario.segundNom || '');
+    formData.append('primerApelli', usuario.primerApelli || '');
+    formData.append('segundApelli', usuario.segundApelli || '');
+    formData.append('correo', usuario.correo || '');
+    formData.append('estado', usuario.estado !== undefined ? usuario.estado : 1);
+    
+    if (usuario.imagenPerfil instanceof File) {
+      formData.append('imagenPerfil', usuario.imagenPerfil);
+    }
   }
 
   const res = await fetch(`${API_URL}/${id}`, {

@@ -44,8 +44,8 @@ public class Usuario {
     private LocalDateTime fechaIngreso;
 
     @Lob
-    @Column(name = "imagen", columnDefinition = "LONGBLOB")
-    private byte[] imagen;
+    @Column(name = "imagen_perfil", columnDefinition = "LONGBLOB")
+    private byte[] imagenPerfil;
 
     // Asigna contraseña por defecto y fecha del sistema antes de guardar en MySQL
     @PrePersist
@@ -146,11 +146,11 @@ public class Usuario {
         this.fechaIngreso = fechaIngreso;
     }
 
-    public byte[] getImagen() {
-        return imagen;
+    public byte[] getImagenPerfil() {
+        return imagenPerfil;
     }
 
-    public void setImagen(byte[] imagen) {
-        this.imagen = imagen;
+    public void setImagenPerfil(byte[] imagenPerfil) {
+        this.imagenPerfil = imagenPerfil;
     }
 }

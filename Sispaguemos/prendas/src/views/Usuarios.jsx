@@ -13,7 +13,7 @@ export default function UsuariosPage() {
     primerApelli: '',
     segundApelli: '',
     correo: '',
-    imagen: null
+    imagenPerfil: null
   });
   const [previewImagen, setPreviewImagen] = useState(null);
   const [editandoId, setEditandoId] = useState(null);
@@ -32,7 +32,9 @@ export default function UsuariosPage() {
   };
 
   const handleChange = (e) => {
-    if (e.target.name === 'imagen') {
+    const { name, value } = e.target;
+
+    if (name === 'imagenPerfil') {
       const file = e.target.files[0];
       
       if (file && file.size > 500 * 1024) {
@@ -40,7 +42,7 @@ export default function UsuariosPage() {
         e.target.value = '';
         setFormData({
           ...formData,
-          imagen: null
+          imagenPerfil: null
         });
         setPreviewImagen(null);
         return;
@@ -48,7 +50,7 @@ export default function UsuariosPage() {
 
       setFormData({
         ...formData,
-        imagen: file
+        imagenPerfil: file
       });
       if (file) {
         const reader = new FileReader();
@@ -58,10 +60,27 @@ export default function UsuariosPage() {
         reader.readAsDataURL(file);
       }
     } else {
-      setFormData({
-        ...formData,
-        [e.target.name]: e.target.value
-      });
+      if (['primerNom', 'segundNom', 'primerApelli', 'segundApelli'].includes(name)) {
+        const soloLetras = /^[A-Za-zÁÉÍÓÚáéíóúÑñ\s]*$/;
+        if (value.length <= 30 && soloLetras.test(value)) {
+          setFormData({
+            ...formData,
+            [name]: value
+          });
+        }
+      } else if (name === 'correo') {
+        if (value.length <= 50) {
+          setFormData({
+            ...formData,
+            [name]: value
+          });
+        }
+      } else {
+        setFormData({
+          ...formData,
+          [name]: value
+        });
+      }
     }
   };
 
@@ -74,12 +93,25 @@ export default function UsuariosPage() {
     }
 
     try {
-      const datosUsuario = { ...formData, estado: 1 };
+      // Creamos un objeto FormData para enviar archivos y texto correctamente
+      const dataToSend = new FormData();
+      dataToSend.append('primerNom', formData.primerNom);
+      dataToSend.append('segundNom', formData.segundNom || '');
+      dataToSend.append('primerApelli', formData.primerApelli);
+      dataToSend.append('segundApelli', formData.segundApelli || '');
+      dataToSend.append('correo', formData.correo);
+      dataToSend.append('estado', 1);
+
+      // Solo agregamos la imagen si el usuario seleccionó una nueva
+      if (formData.imagenPerfil) {
+        dataToSend.append('imagenPerfil', formData.imagenPerfil);
+      }
+
       if (editandoId) {
-        await actualizarUsuario(editandoId, datosUsuario);
+        await actualizarUsuario(editandoId, dataToSend);
         alert('Usuario actualizado exitosamente');
       } else {
-        await crearUsuario(datosUsuario);
+        await crearUsuario(dataToSend);
         alert('Usuario creado exitosamente');
       }
       limpiarFormulario();
@@ -98,10 +130,10 @@ export default function UsuariosPage() {
       primerApelli: usuario.primerApelli || '',
       segundApelli: usuario.segundApelli || '',
       correo: usuario.correo || '',
-      imagen: null
+      imagenPerfil: null
     });
-    if (usuario.imagen) {
-      const imagenBase64 = `data:image/jpeg;base64,${usuario.imagen}`;
+    if (usuario.imagenPerfil) {
+      const imagenBase64 = `data:image/jpeg;base64,${usuario.imagenPerfil}`;
       setPreviewImagen(imagenBase64);
     } else {
       setPreviewImagen(null);
@@ -121,7 +153,7 @@ export default function UsuariosPage() {
           segundApelli: usuario.segundApelli,
           correo: usuario.correo,
           estado: nuevoEstado,
-          imagen: null
+          imagenPerfil: null
         });
         cargarUsuarios();
       } catch (error) {
@@ -139,12 +171,11 @@ export default function UsuariosPage() {
       primerApelli: '',
       segundApelli: '',
       correo: '',
-      imagen: null
+      imagenPerfil: null
     });
     setPreviewImagen(null);
   };
 
-  // Filtrado optimizado para evitar problemas de enfoque
   const usuariosFiltrados = usuarios.filter((u) => {
     const termino = busqueda.toLowerCase().trim();
     if (!termino) return true;
@@ -202,13 +233,13 @@ export default function UsuariosPage() {
               <label style={{ display: 'block', fontSize: '0.75rem', fontWeight: 'bold', color: '#475569', marginBottom: '0.4rem', textTransform: 'uppercase' }}>
                 Primer Nombre *
               </label>
-              <input type="text" name="primerNom" value={formData.primerNom} onChange={handleChange} required style={inputStyle} />
+              <input type="text" name="primerNom" maxLength="30" value={formData.primerNom} onChange={handleChange} required style={inputStyle} />
             </div>
             <div>
               <label style={{ display: 'block', fontSize: '0.75rem', fontWeight: 'bold', color: '#475569', marginBottom: '0.4rem', textTransform: 'uppercase' }}>
                 Segundo Nombre
               </label>
-              <input type="text" name="segundNom" value={formData.segundNom} onChange={handleChange} style={inputStyle} />
+              <input type="text" name="segundNom" maxLength="30" value={formData.segundNom} onChange={handleChange} style={inputStyle} />
             </div>
           </div>
 
@@ -217,13 +248,13 @@ export default function UsuariosPage() {
               <label style={{ display: 'block', fontSize: '0.75rem', fontWeight: 'bold', color: '#475569', marginBottom: '0.4rem', textTransform: 'uppercase' }}>
                 Primer Apellido *
               </label>
-              <input type="text" name="primerApelli" value={formData.primerApelli} onChange={handleChange} required style={inputStyle} />
+              <input type="text" name="primerApelli" maxLength="30" value={formData.primerApelli} onChange={handleChange} required style={inputStyle} />
             </div>
             <div>
               <label style={{ display: 'block', fontSize: '0.75rem', fontWeight: 'bold', color: '#475569', marginBottom: '0.4rem', textTransform: 'uppercase' }}>
                 Segundo Apellido
               </label>
-              <input type="text" name="segundApelli" value={formData.segundApelli} onChange={handleChange} style={inputStyle} />
+              <input type="text" name="segundApelli" maxLength="30" value={formData.segundApelli} onChange={handleChange} style={inputStyle} />
             </div>
           </div>
 
@@ -232,7 +263,7 @@ export default function UsuariosPage() {
               <label style={{ display: 'block', fontSize: '0.75rem', fontWeight: 'bold', color: '#475569', marginBottom: '0.4rem', textTransform: 'uppercase' }}>
                 Correo Electrónico *
               </label>
-              <input type="email" name="correo" value={formData.correo} onChange={handleChange} required style={inputStyle} />
+              <input type="email" name="correo" maxLength="50" value={formData.correo} onChange={handleChange} required style={inputStyle} />
             </div>
           </div>
 
@@ -241,7 +272,7 @@ export default function UsuariosPage() {
               <label style={{ display: 'block', fontSize: '0.75rem', fontWeight: 'bold', color: '#475569', marginBottom: '0.4rem', textTransform: 'uppercase' }}>
                 Foto de Perfil
               </label>
-              <input type="file" name="imagen" accept="image/*" onChange={handleChange} style={{ ...inputStyle, padding: '0.5rem 0.8rem', cursor: 'pointer' }} />
+              <input type="file" name="imagenPerfil" accept="image/*" onChange={handleChange} style={{ ...inputStyle, padding: '0.5rem 0.8rem', cursor: 'pointer' }} />
             </div>
             {previewImagen && (
               <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'center', borderRadius: '8px', overflow: 'hidden', border: '2px solid #e2e8f0' }}>
@@ -297,8 +328,8 @@ export default function UsuariosPage() {
                   <tr key={u.id} style={{ borderBottom: '1px solid #f1f5f9' }}>
                     <td style={{ padding: '0.75rem', color: '#2563eb', fontWeight: 'bold' }}>{u.id}</td>
                     <td style={{ padding: '0.75rem', textAlign: 'center' }}>
-                      {u.imagen ? (
-                        <img src={`data:image/jpeg;base64,${u.imagen}`} alt="Perfil" style={{ width: '40px', height: '40px', borderRadius: '50%', objectFit: 'cover' }} />
+                      {u.imagenPerfil ? (
+                        <img src={`data:image/jpeg;base64,${u.imagenPerfil}`} alt="Perfil" style={{ width: '40px', height: '40px', borderRadius: '50%', objectFit: 'cover' }} />
                       ) : (
                         <div style={{ width: '40px', height: '40px', borderRadius: '50%', backgroundColor: '#e2e8f0', display: 'flex', alignItems: 'center', justifyContent: 'center', margin: '0 auto' }}>
                           <span style={{ fontSize: '0.75rem', color: '#94a3b8' }}>N/A</span>
