@@ -13,6 +13,9 @@ function DashboardAdmin() {
           <Link to="/prendas" className="btn-primary" style={{ textDecoration: 'none', padding: '10px 20px' }}>
             Ir a Gestión de Inventario
           </Link>
+          <Link to="/usuarios" className="btn-primary" style={{ textDecoration: 'none', padding: '10px 20px', marginLeft: '10px' }}>
+            Ir a Gestión de Usuarios
+          </Link>
         </div>
       </div>
     </div>
