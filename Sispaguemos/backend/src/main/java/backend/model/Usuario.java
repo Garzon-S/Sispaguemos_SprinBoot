@@ -34,7 +34,7 @@ public class Usuario {
     @Column(name = "correo", nullable = false, length = 100)
     private String correo;
 
-    @Column(name = "contrasena")
+    @Column(name = "contrasena", nullable = false)
     private String contrasena;
 
     @Column(name = "estado", nullable = false)
@@ -47,14 +47,11 @@ public class Usuario {
     @Column(name = "imagen_perfil", columnDefinition = "LONGBLOB")
     private byte[] imagenPerfil;
 
-    // Asigna contraseña por defecto y fecha del sistema antes de guardar en MySQL
+    // Asigna la fecha del sistema antes de guardar en MySQL
     @PrePersist
     public void prePersist() {
         if (this.fechaIngreso == null) {
             this.fechaIngreso = LocalDateTime.now();
-        }
-        if (this.contrasena == null || this.contrasena.isEmpty()) {
-            this.contrasena = "123456"; // Contraseña temporal
         }
     }
 

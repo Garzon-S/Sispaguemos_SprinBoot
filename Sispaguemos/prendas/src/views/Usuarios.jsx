@@ -4,6 +4,24 @@ import {
 } from '../services/usuarioService';
 import '../App.css';
 
+const palette = {
+  fucsia: '#e63982',
+  fucsiaDark: '#c02563',
+  plum: '#2b1830',
+  cream: '#fdf6f1',
+  sand: '#f3e7dd',
+  gold: '#c9973f',
+  sage: '#7c9885',
+  ink: '#231421',
+  slate: '#5b4a56',
+  white: '#ffffff',
+  border: '#eadfe6',
+  soft: '#f7f1f4',
+  success: '#1f9d63',
+  danger: '#df4b64',
+  info: '#dfeafc',
+};
+
 export default function UsuariosPage() {
   const [usuarios, setUsuarios] = useState([]);
   const [busqueda, setBusqueda] = useState('');
@@ -13,6 +31,7 @@ export default function UsuariosPage() {
     primerApelli: '',
     segundApelli: '',
     correo: '',
+    contrasena: '',
     imagenPerfil: null
   });
   const [previewImagen, setPreviewImagen] = useState(null);
@@ -75,6 +94,13 @@ export default function UsuariosPage() {
             [name]: value
           });
         }
+      } else if (name === 'contrasena') {
+        if (value.length <= 30) {
+          setFormData({
+            ...formData,
+            [name]: value
+          });
+        }
       } else {
         setFormData({
           ...formData,
@@ -92,6 +118,11 @@ export default function UsuariosPage() {
       return;
     }
 
+    if (!editandoId && (!formData.contrasena || !formData.contrasena.trim())) {
+      alert('La contraseña es obligatoria para crear un usuario.');
+      return;
+    }
+
     try {
       // Creamos un objeto FormData para enviar archivos y texto correctamente
       const dataToSend = new FormData();
@@ -100,6 +131,9 @@ export default function UsuariosPage() {
       dataToSend.append('primerApelli', formData.primerApelli);
       dataToSend.append('segundApelli', formData.segundApelli || '');
       dataToSend.append('correo', formData.correo);
+      if (formData.contrasena && formData.contrasena.trim()) {
+        dataToSend.append('contrasena', formData.contrasena);
+      }
       dataToSend.append('estado', 1);
 
       // Solo agregamos la imagen si el usuario seleccionó una nueva
@@ -130,6 +164,7 @@ export default function UsuariosPage() {
       primerApelli: usuario.primerApelli || '',
       segundApelli: usuario.segundApelli || '',
       correo: usuario.correo || '',
+      contrasena: '',
       imagenPerfil: null
     });
     if (usuario.imagenPerfil) {
@@ -171,6 +206,7 @@ export default function UsuariosPage() {
       primerApelli: '',
       segundApelli: '',
       correo: '',
+      contrasena: '',
       imagenPerfil: null
     });
     setPreviewImagen(null);
@@ -189,39 +225,40 @@ export default function UsuariosPage() {
 
   const inputStyle = {
     width: '100%',
-    padding: '0.65rem 0.8rem',
-    borderRadius: '8px',
-    border: '1px solid #e2e8f0',
-    backgroundColor: '#f8fafc',
-    color: '#334155',
+    padding: '0.8rem 1rem',
+    borderRadius: '14px',
+    border: `1.6px solid ${palette.border}`,
+    backgroundColor: palette.cream,
+    color: palette.ink,
     outline: 'none',
-    fontSize: '0.9rem',
-    boxSizing: 'border-box'
+    fontSize: '0.95rem',
+    boxSizing: 'border-box',
+    transition: 'border-color 0.2s ease, box-shadow 0.2s ease, background-color 0.2s ease',
   };
 
   return (
-    <div style={{ maxWidth: '850px', margin: '0 auto', padding: '1.5rem' }}>
-      
-      {/* FORMULARIO */}
+    <div style={{ maxWidth: '980px', margin: '0 auto', padding: '2rem 1.5rem 3rem' }}>
       <div style={{
-        backgroundColor: '#ffffff',
-        borderRadius: '16px',
+        backgroundColor: palette.white,
+        borderRadius: '22px',
         padding: '2rem',
-        boxShadow: '0 4px 20px rgba(0,0,0,0.05)',
-        marginBottom: '2rem'
+        boxShadow: '0 18px 42px rgba(43, 24, 48, 0.08)',
+        marginBottom: '2rem',
+        border: `1px solid ${palette.border}`,
       }}>
-        <div style={{ display: 'flex', alignItems: 'center', gap: '1rem', marginBottom: '1.5rem' }}>
+        <div style={{ display: 'flex', alignItems: 'center', gap: '1rem', marginBottom: '1.75rem' }}>
           <div style={{
-            width: '40px',
-            height: '40px',
+            width: '38px',
+            height: '38px',
             borderRadius: '50%',
-            background: 'linear-gradient(135deg, #6366f1, #3b82f6)'
+            background: `linear-gradient(135deg, ${palette.fucsia}, ${palette.sage})`,
+            boxShadow: '0 10px 24px rgba(230, 57, 130, 0.22)',
           }} />
           <div>
-            <h2 style={{ margin: 0, fontSize: '1.25rem', color: '#1e293b' }}>
+            <h2 style={{ margin: 0, fontSize: '1.7rem', color: palette.plum, fontWeight: '700' }}>
               {editandoId ? 'Editar Usuario' : 'Agregar Nuevo Usuario'}
             </h2>
-            <span style={{ fontSize: '0.85rem', color: '#64748b' }}>
+            <span style={{ fontSize: '0.92rem', color: palette.slate }}>
               Completa los campos para registrar en la base de datos.
             </span>
           </div>
@@ -230,13 +267,13 @@ export default function UsuariosPage() {
         <form onSubmit={handleSubmit} style={{ display: 'flex', flexDirection: 'column', gap: '1.2rem' }}>
           <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: '1rem' }}>
             <div>
-              <label style={{ display: 'block', fontSize: '0.75rem', fontWeight: 'bold', color: '#475569', marginBottom: '0.4rem', textTransform: 'uppercase' }}>
+              <label style={{ display: 'block', fontSize: '0.78rem', fontWeight: '700', color: palette.plum, marginBottom: '0.45rem', letterSpacing: '0.08em', textTransform: 'uppercase' }}>
                 Primer Nombre *
               </label>
               <input type="text" name="primerNom" maxLength="30" value={formData.primerNom} onChange={handleChange} required style={inputStyle} />
             </div>
             <div>
-              <label style={{ display: 'block', fontSize: '0.75rem', fontWeight: 'bold', color: '#475569', marginBottom: '0.4rem', textTransform: 'uppercase' }}>
+              <label style={{ display: 'block', fontSize: '0.78rem', fontWeight: '700', color: palette.plum, marginBottom: '0.45rem', letterSpacing: '0.08em', textTransform: 'uppercase' }}>
                 Segundo Nombre
               </label>
               <input type="text" name="segundNom" maxLength="30" value={formData.segundNom} onChange={handleChange} style={inputStyle} />
@@ -245,48 +282,81 @@ export default function UsuariosPage() {
 
           <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: '1rem' }}>
             <div>
-              <label style={{ display: 'block', fontSize: '0.75rem', fontWeight: 'bold', color: '#475569', marginBottom: '0.4rem', textTransform: 'uppercase' }}>
+              <label style={{ display: 'block', fontSize: '0.78rem', fontWeight: '700', color: palette.plum, marginBottom: '0.45rem', letterSpacing: '0.08em', textTransform: 'uppercase' }}>
                 Primer Apellido *
               </label>
               <input type="text" name="primerApelli" maxLength="30" value={formData.primerApelli} onChange={handleChange} required style={inputStyle} />
             </div>
             <div>
-              <label style={{ display: 'block', fontSize: '0.75rem', fontWeight: 'bold', color: '#475569', marginBottom: '0.4rem', textTransform: 'uppercase' }}>
+              <label style={{ display: 'block', fontSize: '0.78rem', fontWeight: '700', color: palette.plum, marginBottom: '0.45rem', letterSpacing: '0.08em', textTransform: 'uppercase' }}>
                 Segundo Apellido
               </label>
               <input type="text" name="segundApelli" maxLength="30" value={formData.segundApelli} onChange={handleChange} style={inputStyle} />
             </div>
           </div>
 
-          <div style={{ display: 'grid', gridTemplateColumns: '1fr', gap: '1rem' }}>
-            <div>
-              <label style={{ display: 'block', fontSize: '0.75rem', fontWeight: 'bold', color: '#475569', marginBottom: '0.4rem', textTransform: 'uppercase' }}>
-                Correo Electrónico *
-              </label>
-              <input type="email" name="correo" maxLength="50" value={formData.correo} onChange={handleChange} required style={inputStyle} />
-            </div>
+          <div>
+            <label style={{ display: 'block', fontSize: '0.78rem', fontWeight: '700', color: palette.plum, marginBottom: '0.45rem', letterSpacing: '0.08em', textTransform: 'uppercase' }}>
+              Correo Electrónico *
+            </label>
+            <input type="email" name="correo" maxLength="50" value={formData.correo} onChange={handleChange} required style={inputStyle} />
+          </div>
+
+          <div>
+            <label style={{ display: 'block', fontSize: '0.78rem', fontWeight: '700', color: palette.plum, marginBottom: '0.45rem', letterSpacing: '0.08em', textTransform: 'uppercase' }}>
+              {editandoId ? 'Nueva Contraseña' : 'Contraseña *'}
+            </label>
+            <input
+              type="password"
+              name="contrasena"
+              maxLength="30"
+              value={formData.contrasena}
+              onChange={handleChange}
+              required={!editandoId}
+              placeholder={editandoId ? 'Dejar en blanco para conservar la actual' : 'Ingresa la contraseña'}
+              style={inputStyle}
+            />
           </div>
 
           <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: '1rem' }}>
             <div>
-              <label style={{ display: 'block', fontSize: '0.75rem', fontWeight: 'bold', color: '#475569', marginBottom: '0.4rem', textTransform: 'uppercase' }}>
+              <label style={{ display: 'block', fontSize: '0.78rem', fontWeight: '700', color: palette.plum, marginBottom: '0.45rem', letterSpacing: '0.08em', textTransform: 'uppercase' }}>
                 Foto de Perfil
               </label>
-              <input type="file" name="imagenPerfil" accept="image/*" onChange={handleChange} style={{ ...inputStyle, padding: '0.5rem 0.8rem', cursor: 'pointer' }} />
+              <input type="file" name="imagenPerfil" accept="image/*" onChange={handleChange} style={{ ...inputStyle, padding: '0.7rem 0.8rem', cursor: 'pointer' }} />
             </div>
             {previewImagen && (
-              <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'center', borderRadius: '8px', overflow: 'hidden', border: '2px solid #e2e8f0' }}>
-                <img src={previewImagen} alt="Preview" style={{ maxHeight: '100px', maxWidth: '100%', objectFit: 'contain' }} />
+              <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'center', borderRadius: '14px', overflow: 'hidden', border: `2px solid ${palette.border}`, background: palette.soft }}>
+                <img src={previewImagen} alt="Preview" style={{ maxHeight: '120px', maxWidth: '100%', objectFit: 'contain', padding: '0.3rem' }} />
               </div>
             )}
           </div>
 
-          <div style={{ display: 'flex', gap: '0.5rem', marginTop: '0.5rem' }}>
-            <button type="submit" style={{ backgroundColor: '#2563eb', color: '#fff', border: 'none', padding: '0.7rem 1.5rem', borderRadius: '8px', fontWeight: 'bold', cursor: 'pointer' }}>
+          <div style={{ display: 'flex', gap: '0.75rem', marginTop: '0.5rem', alignItems: 'center' }}>
+            <button type="submit" style={{
+              background: `linear-gradient(135deg, ${palette.fucsia}, ${palette.fucsiaDark})`,
+              color: palette.white,
+              border: 'none',
+              padding: '0.9rem 1.7rem',
+              borderRadius: '14px',
+              fontWeight: '800',
+              fontSize: '0.96rem',
+              cursor: 'pointer',
+              boxShadow: '0 12px 24px rgba(230, 57, 130, 0.28)',
+              minWidth: '180px',
+            }}>
               {editandoId ? 'Guardar Cambios' : 'Guardar Usuario'}
             </button>
             {editandoId && (
-              <button type="button" onClick={limpiarFormulario} style={{ backgroundColor: '#94a3b8', color: '#fff', border: 'none', padding: '0.7rem 1.5rem', borderRadius: '8px', fontWeight: 'bold', cursor: 'pointer' }}>
+              <button type="button" onClick={limpiarFormulario} style={{
+                backgroundColor: palette.soft,
+                color: palette.plum,
+                border: `1.6px solid ${palette.border}`,
+                padding: '0.9rem 1.2rem',
+                borderRadius: '14px',
+                fontWeight: '700',
+                cursor: 'pointer',
+              }}>
                 Cancelar
               </button>
             )}
@@ -294,9 +364,14 @@ export default function UsuariosPage() {
         </form>
       </div>
 
-      {/* TABLA */}
-      <div style={{ backgroundColor: '#ffffff', borderRadius: '16px', padding: '2rem', boxShadow: '0 4px 20px rgba(0,0,0,0.05)' }}>
-        <h2 style={{ textAlign: 'center', margin: '0 0 1.5rem 0', color: '#1e293b', fontSize: '1.25rem' }}>
+      <div style={{
+        backgroundColor: palette.white,
+        borderRadius: '22px',
+        padding: '2rem',
+        boxShadow: '0 18px 42px rgba(43, 24, 48, 0.08)',
+        border: `1px solid ${palette.border}`,
+      }}>
+        <h2 style={{ textAlign: 'center', margin: '0 0 1.5rem 0', color: palette.plum, fontSize: '2rem', fontWeight: '700' }}>
           Lista de Usuarios Registrados
         </h2>
 
@@ -306,49 +381,77 @@ export default function UsuariosPage() {
             placeholder="Buscar por ID o Nombre" 
             value={busqueda} 
             onChange={(e) => setBusqueda(e.target.value)} 
-            style={{ ...inputStyle, width: '50%', textAlign: 'center' }} 
+            style={{ ...inputStyle, width: '52%', textAlign: 'center', backgroundColor: palette.soft }} 
           />
         </div>
 
         <div style={{ overflowX: 'auto' }}>
-          <table style={{ width: '100%', borderCollapse: 'collapse', textAlign: 'left', fontSize: '0.875rem' }}>
+          <table style={{ width: '100%', borderCollapse: 'collapse', textAlign: 'left', fontSize: '0.9rem' }}>
             <thead>
-              <tr style={{ borderBottom: '1px solid #e2e8f0', color: '#64748b', textTransform: 'uppercase', fontSize: '0.75rem' }}>
-                <th style={{ padding: '0.75rem' }}>ID</th>
-                <th style={{ padding: '0.75rem' }}>Imagen</th>
-                <th style={{ padding: '0.75rem' }}>Nombre Completo</th>
-                <th style={{ padding: '0.75rem' }}>Correo</th>
-                <th style={{ padding: '0.75rem' }}>Estado</th>
-                <th style={{ padding: '0.75rem', textAlign: 'center' }}>Acciones</th>
+              <tr style={{ borderBottom: `1px solid ${palette.border}`, color: palette.slate, textTransform: 'uppercase', fontSize: '0.74rem', letterSpacing: '0.06em' }}>
+                <th style={{ padding: '0.9rem 0.8rem' }}>ID</th>
+                <th style={{ padding: '0.9rem 0.8rem' }}>Imagen</th>
+                <th style={{ padding: '0.9rem 0.8rem' }}>Nombre Completo</th>
+                <th style={{ padding: '0.9rem 0.8rem' }}>Correo</th>
+                <th style={{ padding: '0.9rem 0.8rem' }}>Estado</th>
+                <th style={{ padding: '0.9rem 0.8rem', textAlign: 'center' }}>Acciones</th>
               </tr>
             </thead>
             <tbody>
               {usuariosFiltrados.length > 0 ? (
                 usuariosFiltrados.map((u) => (
-                  <tr key={u.id} style={{ borderBottom: '1px solid #f1f5f9' }}>
-                    <td style={{ padding: '0.75rem', color: '#2563eb', fontWeight: 'bold' }}>{u.id}</td>
-                    <td style={{ padding: '0.75rem', textAlign: 'center' }}>
+                  <tr key={u.id} style={{ borderBottom: `1px solid ${palette.soft}` }}>
+                    <td style={{ padding: '0.9rem 0.8rem', color: palette.fucsiaDark, fontWeight: '800' }}>{u.id}</td>
+                    <td style={{ padding: '0.9rem 0.8rem', textAlign: 'center' }}>
                       {u.imagenPerfil ? (
-                        <img src={`data:image/jpeg;base64,${u.imagenPerfil}`} alt="Perfil" style={{ width: '40px', height: '40px', borderRadius: '50%', objectFit: 'cover' }} />
+                        <img src={`data:image/jpeg;base64,${u.imagenPerfil}`} alt="Perfil" style={{ width: '42px', height: '42px', borderRadius: '50%', objectFit: 'cover', border: `2px solid ${palette.border}` }} />
                       ) : (
-                        <div style={{ width: '40px', height: '40px', borderRadius: '50%', backgroundColor: '#e2e8f0', display: 'flex', alignItems: 'center', justifyContent: 'center', margin: '0 auto' }}>
-                          <span style={{ fontSize: '0.75rem', color: '#94a3b8' }}>N/A</span>
+                        <div style={{ width: '42px', height: '42px', borderRadius: '50%', backgroundColor: palette.sand, display: 'flex', alignItems: 'center', justifyContent: 'center', margin: '0 auto' }}>
+                          <span style={{ fontSize: '0.72rem', color: palette.slate, fontWeight: '700' }}>N/A</span>
                         </div>
                       )}
                     </td>
-                    <td style={{ padding: '0.75rem', color: '#334155' }}>
-                      {`${u.primerNom || ''} ${u.segundNom || ''} ${u.primerApelli || ''} ${u.segundApelli || ''}`}
+                    <td style={{ padding: '0.9rem 0.8rem', color: palette.ink, fontWeight: '600' }}>
+                      {`${u.primerNom || ''} ${u.segundNom || ''} ${u.primerApelli || ''} ${u.segundApelli || ''}`.trim() || '—'}
                     </td>
-                    <td style={{ padding: '0.75rem', color: '#64748b' }}>{u.correo}</td>
-                    <td style={{ padding: '0.75rem', color: u.estado === 1 ? '#16a34a' : '#dc2626', fontWeight: 'bold' }}>
-                      {u.estado === 1 ? 'ACTIVO' : 'INACTIVO'}
+                    <td style={{ padding: '0.9rem 0.8rem', color: palette.slate }}>{u.correo}</td>
+                    <td style={{ padding: '0.9rem 0.8rem' }}>
+                      <span style={{
+                        display: 'inline-block',
+                        padding: '0.38rem 0.72rem',
+                        borderRadius: '999px',
+                        color: u.estado === 1 ? palette.success : palette.danger,
+                        backgroundColor: u.estado === 1 ? '#eafaf3' : '#ffe7eb',
+                        fontWeight: '800',
+                        fontSize: '0.76rem',
+                        letterSpacing: '0.04em',
+                      }}>
+                        {u.estado === 1 ? 'ACTIVO' : 'INACTIVO'}
+                      </span>
                     </td>
-                    <td style={{ padding: '0.75rem', textAlign: 'center' }}>
-                      <div style={{ display: 'flex', gap: '0.4rem', justifyContent: 'center', alignItems: 'center' }}>
-                        <button onClick={() => handleEdit(u)} style={{ backgroundColor: '#dbeafe', color: '#2563eb', border: 'none', padding: '0.35rem 0.75rem', borderRadius: '6px', fontWeight: 'bold', cursor: 'pointer' }}>
+                    <td style={{ padding: '0.9rem 0.8rem', textAlign: 'center' }}>
+                      <div style={{ display: 'flex', gap: '0.5rem', justifyContent: 'center', alignItems: 'center', flexWrap: 'wrap' }}>
+                        <button onClick={() => handleEdit(u)} style={{
+                          backgroundColor: palette.info,
+                          color: palette.fucsiaDark,
+                          border: 'none',
+                          padding: '0.45rem 0.9rem',
+                          borderRadius: '10px',
+                          fontWeight: '700',
+                          cursor: 'pointer',
+                        }}>
                           Editar
                         </button>
-                        <button onClick={() => handleCambiarEstado(u)} style={{ backgroundColor: u.estado === 1 ? '#ffe4e6' : '#dcfce7', color: u.estado === 1 ? '#e11d48' : '#15803d', border: 'none', padding: '0.35rem 0.75rem', borderRadius: '6px', fontWeight: 'bold', cursor: 'pointer', minWidth: '70px' }}>
+                        <button onClick={() => handleCambiarEstado(u)} style={{
+                          backgroundColor: u.estado === 1 ? '#ffe7eb' : '#e8f9ef',
+                          color: u.estado === 1 ? palette.danger : palette.success,
+                          border: 'none',
+                          padding: '0.45rem 0.9rem',
+                          borderRadius: '10px',
+                          fontWeight: '700',
+                          cursor: 'pointer',
+                          minWidth: '85px',
+                        }}>
                           {u.estado === 1 ? 'Inactivar' : 'Activar'}
                         </button>
                       </div>
@@ -357,7 +460,7 @@ export default function UsuariosPage() {
                 ))
               ) : (
                 <tr>
-                  <td colSpan="6" style={{ padding: '1.5rem', textAlign: 'center', color: '#94a3b8' }}>
+                  <td colSpan="6" style={{ padding: '1.5rem', textAlign: 'center', color: palette.slate, fontWeight: '600' }}>
                     No se encontraron usuarios registrados
                   </td>
                 </tr>
@@ -366,7 +469,6 @@ export default function UsuariosPage() {
           </table>
         </div>
       </div>
-
     </div>
   );
 }

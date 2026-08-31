@@ -1,12 +1,47 @@
 // src/components/Layout.jsx
-import { Link, useLocation, Outlet } from 'react-router-dom';
+import { Link, useLocation, Outlet, useNavigate } from 'react-router-dom';
 import '../styles/Layout.css';
 
 function Layout() {
   const location = useLocation();
+  const navigate = useNavigate();
+
+  const usuarioActual = (() => {
+    try {
+      const raw = localStorage.getItem('usuarioActual');
+      return raw ? JSON.parse(raw) : null;
+    } catch {
+      return null;
+    }
+  })();
+
+  const rol = String(usuarioActual?.rol ?? 'usuario').trim().toLowerCase();
+  const nombreCompleto = [
+    usuarioActual?.primerNom,
+    usuarioActual?.segundNom,
+    usuarioActual?.primerApelli,
+    usuarioActual?.segundApelli,
+  ].filter(Boolean).join(' ');
+
+  const tituloRol = rol === 'administrador'
+    ? 'ADMINISTRADOR'
+    : rol === 'empleado'
+      ? 'EMPLEADO'
+      : 'CLIENTE';
+
+  const textoEstado = rol === 'administrador'
+    ? 'Administrador activo'
+    : rol === 'empleado'
+      ? 'Empleado activo'
+      : 'Cliente activo';
 
   const isActive = (path) => {
     return location.pathname === path || location.pathname.startsWith(path + '/');
+  };
+
+  const cerrarSesion = () => {
+    localStorage.removeItem('usuarioActual');
+    navigate('/');
   };
 
   return (
@@ -18,9 +53,9 @@ function Layout() {
         </div>
 
         <div className="sidebar-user">
-          <small>ADMINISTRADOR</small>
-          <h3>Sergio Garzon</h3>
-          <span className="user-status">Administrador activo</span>
+          <small>{tituloRol}</small>
+          <h3>{nombreCompleto || 'Usuario'}</h3>
+          <span className="user-status">{textoEstado}</span>
         </div>
 
         <nav className="sidebar-nav">
@@ -47,7 +82,7 @@ function Layout() {
         <div className="sidebar-footer">
           <small>ATENCIÓN</small>
           <p>Mantén actualizado el inventario para evitar rupturas de stock.</p>
-          <button className="btn-logout" onClick={() => alert('Cerrando sesión...')}>
+          <button className="btn-logout" onClick={cerrarSesion}>
             Cerrar Sesión
           </button>
         </div>
@@ -55,7 +90,7 @@ function Layout() {
 
       <main className="main-content">
         <div className="top-banner">
-          <span>🟢 Bienvenido Administrador</span>
+          <span>{`🟢 Bienvenido ${tituloRol === 'ADMINISTRADOR' ? 'Administrador' : tituloRol === 'EMPLEADO' ? 'Empleado' : 'Cliente'}`}</span>
         </div>
         <Outlet />
       </main>
