@@ -9,6 +9,7 @@ import Prendas from './views/Prendas';
 import Bodega from './views/Bodega';
 import Usuarios from './views/Usuarios';
 import PerfilUsuario from './views/PerfilUsuario';
+import CatalogoCliente from './views/CatalogoCliente';
 
 const normalizeRole = (value) => String(value ?? '').trim().toLowerCase();
 
@@ -51,6 +52,7 @@ function App() {
         <Route path="/" element={<Inicio />} />
         <Route path="/iniciosesionregistro" element={<IniciosesionRegistro />} />
         <Route path="/perfil" element={<PerfilUsuario />} />
+        <Route path="/catalogo" element={<CatalogoCliente />} />
 
         <Route element={<ProtectedAdminLayout />}>
           <Route path="/dashboard" element={<DashboardAdmin />} />

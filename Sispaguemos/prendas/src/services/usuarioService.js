@@ -1,4 +1,4 @@
-const API_URL = 'http://localhost:8082/api/usuarios';
+const API_URL = '/api/usuarios';
 
 const handleResponse = async (res, defaultMessage) => {
   const text = await res.text();

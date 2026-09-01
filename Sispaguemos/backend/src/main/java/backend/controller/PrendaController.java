@@ -39,11 +39,32 @@ public class PrendaController {
     // ESTOS SON LOS ENDPOINTS QUE FALTABAN PARA EVITAR EL ERROR 404
     // ====================================================================
 
+    @PutMapping("/{id}")
+    public ResponseEntity<?> actualizarPrenda(@PathVariable String id, @RequestBody Prenda prendaActualizada) {
+        Prenda prenda = prendaRepository.findById(id)
+            .orElseThrow(() -> new RuntimeException("Prenda no encontrada con ID: " + id));
+
+        prenda.setNombrePrend(prendaActualizada.getNombrePrend());
+        prenda.setDescripcionPrend(prendaActualizada.getDescripcionPrend());
+        prenda.setGenero(prendaActualizada.getGenero());
+        prenda.setPrecioVenta(prendaActualizada.getPrecioVenta());
+        prenda.setCantidadDisponibleVenta(prendaActualizada.getCantidadDisponibleVenta());
+        prenda.setEstado(prendaActualizada.getEstado() != null ? prendaActualizada.getEstado() : prenda.getEstado());
+        prenda.setFkIdtPrendas(prendaActualizada.getFkIdtPrendas());
+        prenda.setFkIdColor(prendaActualizada.getFkIdColor());
+
+        if (prendaActualizada.getImagenPrend() != null && !prendaActualizada.getImagenPrend().isBlank()) {
+            prenda.setImagenPrend(prendaActualizada.getImagenPrend());
+        }
+
+        return ResponseEntity.ok(prendaRepository.save(prenda));
+    }
+
     @PutMapping("/{id}/inactivar")
     public ResponseEntity<?> inactivarPrenda(@PathVariable String id) {
         Prenda prenda = prendaRepository.findById(id)
             .orElseThrow(() -> new RuntimeException("Prenda no encontrada con ID: " + id));
-        
+
         prenda.setEstado(0); // 0 = Inactivo
         prendaRepository.save(prenda);
         return ResponseEntity.ok("Prenda inactivada con éxito");
@@ -53,7 +74,7 @@ public class PrendaController {
     public ResponseEntity<?> activarPrenda(@PathVariable String id) {
         Prenda prenda = prendaRepository.findById(id)
             .orElseThrow(() -> new RuntimeException("Prenda no encontrada con ID: " + id));
-        
+
         prenda.setEstado(1); // 1 = Activo
         prendaRepository.save(prenda);
         return ResponseEntity.ok("Prenda activada con éxito");

@@ -453,7 +453,7 @@ export default function InicioPage() {
               }}>
                 Iniciar Sesion
               </Link>
-              <Link to="/prendas" style={{
+              <Link to="/catalogo" style={{
                 border: '2px solid rgba(255,255,255,0.6)',
                 color: '#ffffff',
                 padding: '0.8rem 1.7rem',
@@ -528,10 +528,10 @@ export default function InicioPage() {
             const isHovered = hoverCategory === cat.id;
             const { Icon } = cat;
             return (
-              <a
+              <Link
                 key={cat.id}
                 id={cat.id}
-                href={`#${cat.id}`}
+                to={`/catalogo?genero=${encodeURIComponent(cat.nombre)}`}
                 onMouseEnter={() => setHoverCategory(cat.id)}
                 onMouseLeave={() => setHoverCategory(null)}
                 style={{
@@ -555,7 +555,7 @@ export default function InicioPage() {
                   <div style={{ fontWeight: '700', fontSize: '1.2rem' }}>{cat.nombre}</div>
                   <div style={{ fontSize: '0.82rem', opacity: 0.85 }}>{cat.cantidad}</div>
                 </div>
-              </a>
+              </Link>
             );
           })}
         </div>
