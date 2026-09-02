@@ -16,12 +16,16 @@ function MovimientosInventario() {
   // Estado para el modal de Detalles
   const [modalDetalle, setModalDetalle] = useState({ abierto: false, movimiento: null });
 
+  // Obtenemos el ID del usuario actual logueado desde localStorage (con respaldo en 1)
+  const usuarioActual = JSON.parse(localStorage.getItem('usuarioActual') || '{}');
+  const idUsuarioLogueado = usuarioActual.idUsuario || usuarioActual.id_usuario || usuarioActual.id || 1;
+
   const [formMovimiento, setFormMovimiento] = useState({
     tipo_movimiento: 'Entrada',
     cantidad: '',
     observacion: 'Reestock',
     fk_id_stock: '',
-    fk_id_usuario_admin: 1
+    fk_id_usuario_admin: idUsuarioLogueado
   });
 
   useEffect(() => {
@@ -75,7 +79,7 @@ function MovimientosInventario() {
         cantidad: Number(formMovimiento.cantidad),
         observacion: formMovimiento.observacion,
         fk_id_stock: Number(formMovimiento.fk_id_stock),
-        fk_id_usuario_admin: Number(formMovimiento.fk_id_usuario_admin)
+        fk_id_usuario_admin: Number(idUsuarioLogueado) // Se inyecta el ID del usuario actual activo
       };
 
       await axios.post('http://localhost:8080/api/movimientos', payload);
@@ -88,7 +92,7 @@ function MovimientosInventario() {
         cantidad: '',
         observacion: 'Reestock',
         fk_id_stock: '',
-        fk_id_usuario_admin: 1
+        fk_id_usuario_admin: Number(idUsuarioLogueado)
       });
       cargarDatos();
     } catch (err) {
@@ -113,7 +117,7 @@ function MovimientosInventario() {
   };
 
   const obtenerNombreUsuario = (idAdmin) => {
-    // 1. Buscamos en la lista que trae la API
+    // 1. Buscamos en la lista que trae la API general de usuarios
     const usuarioInfo = usuarios.find(u => (u.idUsuario || u.id_usuario || u.id) == idAdmin);
     if (usuarioInfo) {
       const nombre = usuarioInfo.primerNom || usuarioInfo.primer_nom || '';
@@ -122,12 +126,21 @@ function MovimientosInventario() {
       if (completo) return `${completo} (ID: ${idAdmin})`;
     }
 
-    // 2. Respaldo directo por si la API de usuarios no responde en este componente
+    // 2. Si coincide con el usuario actualmente logueado en el navegador, usamos sus datos directos
+    const actualId = usuarioActual.idUsuario || usuarioActual.id_usuario || usuarioActual.id;
+    if (String(actualId) === String(idAdmin)) {
+      const nombre = usuarioActual.primerNom || usuarioActual.primer_nom || '';
+      const apellido = usuarioActual.primerApelli || usuarioActual.primer_apelli || '';
+      const completo = `${nombre} ${apellido}`.trim();
+      if (completo) return `${completo} (ID: ${idAdmin})`;
+    }
+
+    // 3. Respaldo por defecto para el ID 1 o genéricos
     if (Number(idAdmin) === 1) {
       return `Sergio Garzon (ID: 1)`;
     }
 
-    return `Admin ID: ${idAdmin}`;
+    return `Usuario ID: ${idAdmin}`;
   };
 
   return (

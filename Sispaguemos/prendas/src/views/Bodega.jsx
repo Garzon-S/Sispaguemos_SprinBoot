@@ -1,4 +1,3 @@
-// src/views/Bodega.jsx
 import { useEffect, useState } from 'react';
 import { obtenerBodega, crearBodega, actualizarBodega } from '../services/BodegaService';
 import { obtenerPrendas } from '../services/prendaService';
@@ -9,7 +8,6 @@ function Bodega() {
   const [prendas, setPrendas] = useState([]);
   const [modalError, setModalError] = useState('');
   
-  // Modales
   const [mostrarModalGestion, setMostrarModalGestion] = useState(false);
   const [mostrarModalStock, setMostrarModalStock] = useState(false);
   const [mostrarModalAlerta, setMostrarModalAlerta] = useState(false);
@@ -17,10 +15,14 @@ function Bodega() {
   const [editandoId, setEditandoId] = useState(null);
   const [itemSeleccionado, setItemSeleccionado] = useState(null);
 
-  // Filtros y Buscador
   const [busqueda, setBusqueda] = useState('');
   const [filtroGenero, setFiltroGenero] = useState('Todos');
   const [ordenStock, setOrdenStock] = useState('asc');
+
+  // Verificamos rol
+  const usuarioActual = JSON.parse(localStorage.getItem('usuarioActual') || '{}');
+  const rolUsuario = String(usuarioActual?.rol || usuarioActual?.tipoRol || '').trim().toLowerCase();
+  const esAdmin = rolUsuario === 'administrador' || rolUsuario === 'admin';
 
   const [formBodega, setFormBodega] = useState({
     id_prenda: '',
@@ -65,6 +67,7 @@ function Bodega() {
 
   const handleSubmit = async (e) => {
     e.preventDefault();
+    if (!esAdmin) return;
     setModalError('');
 
     const actual = Number(formBodega.stock_actual);
@@ -113,6 +116,7 @@ function Bodega() {
   };
 
   const iniciarEdicion = (item) => {
+    if (!esAdmin) return;
     const idReg = item.idStock || item.id_stock || item.idBodega || item.id_bodega; 
     const codPrenda = item.idPrenda || item.id_prenda || item.fk_id_prenda;
     const stockAct = item.stockActual ?? item.stock_actual;
@@ -139,7 +143,6 @@ function Bodega() {
     setModalError('');
   };
 
-  // Filtrado y Ordenamiento
   const bodegaFiltrada = bodegaList.filter((item) => {
     const codigoPrenda = item.idPrenda || item.id_prenda || item.fk_id_prenda;
     const prendaInfo = prendas.find(p => (p.idPrenda || p.id_prenda) === codigoPrenda);
@@ -164,12 +167,14 @@ function Bodega() {
     <div className="bodega-content">
       <div className="bodega-header">
         <h2>Modulo de Control de Bodega</h2>
-        <button className="btn-gestionar" onClick={() => { limpiarFormulario(); setMostrarModalGestion(true); }}>
-          + Gestionar Stock
-        </button>
+        {/* Solo admin puede gestionar o crear registros en bodega */}
+        {esAdmin && (
+          <button className="btn-gestionar" onClick={() => { limpiarFormulario(); setMostrarModalGestion(true); }}>
+            + Gestionar Stock
+          </button>
+        )}
       </div>
 
-      {/* FILTROS */}
       <div className="bodega-filters">
         <div className="filter-group">
           <label>Buscar Prenda</label>
@@ -202,7 +207,6 @@ function Bodega() {
         </div>
       </div>
 
-      {/* REJILLA DE TARJETAS */}
       <div className="bodega-grid">
         {bodegaFiltrada.length === 0 ? (
           <p className="bodega-sin-datos">No hay registros de bodega disponibles.</p>
@@ -246,15 +250,18 @@ function Bodega() {
                       Ver detalles
                     </button>
 
-                    <button 
-                      className="btn-editar"
-                      onClick={() => iniciarEdicion(item)} 
-                    >
-                      Editar
-                    </button>
+                    {/* Botón Editar reservado exclusivamente para el Administrador */}
+                    {esAdmin && (
+                      <button 
+                        className="btn-editar"
+                        onClick={() => iniciarEdicion(item)} 
+                      >
+                        Editar
+                      </button>
+                    )}
                   </div>
 
-                  {esCritico && (
+                  {esCritico && esAdmin && (
                     <button 
                       className="btn-alerta"
                       onClick={() => { setItemSeleccionado(item); setMostrarModalAlerta(true); }} 
@@ -269,7 +276,6 @@ function Bodega() {
         )}
       </div>
 
-      {/* MODAL: VER DETALLES */}
       {mostrarModalStock && itemSeleccionado && (
         <div className="modal-overlay">
           <div className="modal-content">
@@ -294,8 +300,7 @@ function Bodega() {
         </div>
       )}
 
-      {/* MODAL: ALERTA DE REESTOCK */}
-      {mostrarModalAlerta && itemSeleccionado && (
+      {mostrarModalAlerta && itemSeleccionado && esAdmin && (
         <div className="modal-overlay">
           <div className="modal-content modal-alerta">
             <div className="modal-header">
@@ -320,8 +325,7 @@ function Bodega() {
         </div>
       )}
 
-      {/* MODAL: GESTIONAR / EDITAR BODEGA */}
-      {mostrarModalGestion && (
+      {mostrarModalGestion && esAdmin && (
         <div className="modal-overlay">
           <div className="modal-content">
             <div className="modal-header">
@@ -423,7 +427,5 @@ function Bodega() {
     </div>
   );
 }
-
-export class BodegaService {}
 
 export default Bodega;

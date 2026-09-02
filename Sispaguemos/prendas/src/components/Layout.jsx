@@ -6,42 +6,20 @@ function Layout() {
   const location = useLocation();
   const navigate = useNavigate();
 
-  const usuarioActual = (() => {
-    try {
-      const raw = localStorage.getItem('usuarioActual');
-      return raw ? JSON.parse(raw) : null;
-    } catch {
-      return null;
-    }
-  })();
+  // Obtenemos el usuario guardado para verificar su rol exacto
+  const usuarioGuardado = JSON.parse(localStorage.getItem('usuarioActual') || '{}');
+  const rol = String(usuarioGuardado?.rol || usuarioGuardado?.tipoRol || 'empleado').trim().toLowerCase();
+  const esAdmin = rol === 'administrador' || rol === 'admin';
 
-  const rol = String(usuarioActual?.rol ?? 'usuario').trim().toLowerCase();
-  const nombreCompleto = [
-    usuarioActual?.primerNom,
-    usuarioActual?.segundNom,
-    usuarioActual?.primerApelli,
-    usuarioActual?.segundApelli,
-  ].filter(Boolean).join(' ');
-
-  const tituloRol = rol === 'administrador'
-    ? 'ADMINISTRADOR'
-    : rol === 'empleado'
-      ? 'EMPLEADO'
-      : 'CLIENTE';
-
-  const textoEstado = rol === 'administrador'
-    ? 'Administrador activo'
-    : rol === 'empleado'
-      ? 'Empleado activo'
-      : 'Cliente activo';
+  const nombreCompleto = `${usuarioGuardado.primerNom || usuarioGuardado.primer_nom || 'Usuario'} ${usuarioGuardado.primerApelli || usuarioGuardado.primer_apelli || ''}`.trim();
 
   const isActive = (path) => {
     return location.pathname === path || location.pathname.startsWith(path + '/');
   };
 
-  const cerrarSesion = () => {
+  const handleLogout = () => {
     localStorage.removeItem('usuarioActual');
-    navigate('/');
+    navigate('/'); // Te devuelve a la pantalla de Inicio / Auth
   };
 
   return (
@@ -53,36 +31,54 @@ function Layout() {
         </div>
 
         <div className="sidebar-user">
-          <small>{tituloRol}</small>
-          <h3>{nombreCompleto || 'Usuario'}</h3>
-          <span className="user-status">{textoEstado}</span>
+          <small>{esAdmin ? 'ADMINISTRADOR' : 'EMPLEADO'}</small>
+          <h3>{nombreCompleto}</h3>
+          <span className="user-status">{esAdmin ? 'Administrador activo' : 'Empleado activo'}</span>
         </div>
 
         <nav className="sidebar-nav">
-          <Link to="/dashboard" className={`nav-item ${isActive('/dashboard') ? 'active' : ''}`}>
-            Resumen (Dashboard)
+          {/* Dashboard Resumen exclusivo para Admin */}
+          {esAdmin && (
+            <Link to="/dashboard" className={`nav-item ${isActive('/dashboard') ? 'active' : ''}`}>
+              Resumen (Dashboard)
+            </Link>
+          )}
+
+          {/* MÓDULO DE VENTAS: Exclusivo para Empleados (Oculto para Administrador) */}
+          {!esAdmin && (
+            <Link to="/ventas" className={`nav-item ${isActive('/ventas') ? 'active' : ''}`}>
+              Ventas
+            </Link>
+          )}
+
+          {/* Entradas y Salidas (Visible para ambos o condicional si gustas) */}
+          <Link to="/movimientos" className={`nav-item ${isActive('/movimientos') ? 'active' : ''}`}>
+            Entradas y Salidas
           </Link>
+
+          {/* Módulos compartidos: Bodega y Catálogo */}
           <Link to="/bodega" className={`nav-item ${isActive('/bodega') ? 'active' : ''}`}>
             Bodega
           </Link>
-          <Link to="/movimientos" className={`nav-item ${isActive('/movimientos') ? 'active' : ''}`}>
-            Control de Entradas y Salidas
-          </Link>
+
           <Link to="/prendas" className={`nav-item ${isActive('/prendas') ? 'active' : ''}`}>
             Catálogo
           </Link>
-          <Link to="/ventas" className={`nav-item ${isActive('/ventas') ? 'active' : ''}`}>
-            Ventas
-          </Link>
-          <Link to="/usuarios" className={`nav-item ${isActive('/usuarios') ? 'active' : ''}`}>
-            Usuarios
-          </Link>
+
+          {/* Módulos exclusivos y avanzados de Administrador */}
+          {esAdmin && (
+            <>
+              <Link to="/usuarios" className={`nav-item ${isActive('/usuarios') ? 'active' : ''}`}>
+                Usuarios
+              </Link>
+            </>
+          )}
         </nav>
 
         <div className="sidebar-footer">
           <small>ATENCIÓN</small>
           <p>Mantén actualizado el inventario para evitar rupturas de stock.</p>
-          <button className="btn-logout" onClick={cerrarSesion}>
+          <button className="btn-logout" onClick={handleLogout}>
             Cerrar Sesión
           </button>
         </div>
@@ -90,7 +86,7 @@ function Layout() {
 
       <main className="main-content">
         <div className="top-banner">
-          <span>{`🟢 Bienvenido ${tituloRol === 'ADMINISTRADOR' ? 'Administrador' : tituloRol === 'EMPLEADO' ? 'Empleado' : 'Cliente'}`}</span>
+          <span> Bienvenido {esAdmin ? 'Administrador' : 'Empleado'}</span>
         </div>
         <Outlet />
       </main>

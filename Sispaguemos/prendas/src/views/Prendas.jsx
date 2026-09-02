@@ -15,10 +15,15 @@ function InventarioPrendas() {
   
   const [busqueda, setBusqueda] = useState('');
   const [filtroGenero, setFiltroGenero] = useState('Todos');
-  const [mostrarInactivas, setMostrarInactivas] = useState(false); // Estado para alternar inactivas
+  const [mostrarInactivas, setMostrarInactivas] = useState(false);
   const [editandoId, setEditandoId] = useState(null);
   const [mostrarModal, setMostrarModal] = useState(false);
   const [previewImg, setPreviewImg] = useState(null);
+
+  // Verificamos rol
+  const usuarioActual = JSON.parse(localStorage.getItem('usuarioActual') || '{}');
+  const rolUsuario = String(usuarioActual?.rol || usuarioActual?.tipoRol || '').trim().toLowerCase();
+  const esAdmin = rolUsuario === 'administrador' || rolUsuario === 'admin';
   
   const [nuevaPrenda, setNuevaPrenda] = useState({
     id_prenda: '',
@@ -27,7 +32,7 @@ function InventarioPrendas() {
     genero: 'Unisex',
     precio_venta: '',
     cantidad_disponible_venta: '',
-    estado: 0, // Nace inactiva por defecto
+    estado: 0,
     fk_idt_prendas: '',
     fk_id_color: '',
     imagen_prend: null 
@@ -82,6 +87,7 @@ function InventarioPrendas() {
 
   const handleSubmit = async (e) => {
     e.preventDefault();
+    if (!esAdmin) return; // Seguridad extra
     setModalError('');
     
     const precio = Number(nuevaPrenda.precio_venta);
@@ -128,6 +134,7 @@ function InventarioPrendas() {
   };
 
   const iniciarEdicion = (p) => {
+    if (!esAdmin) return;
     const idUnico = p.idPrenda || p.id_prenda;
     setEditandoId(idUnico);
     setNuevaPrenda({
@@ -166,8 +173,8 @@ function InventarioPrendas() {
     setMostrarModal(false);
   };
 
-  // Función para Inactivar prenda lógicamente (Estado 0)
   const handleInactivar = async (id) => {
+    if (!esAdmin) return;
     if (window.confirm('¿Estás seguro de inactivar esta prenda?')) {
       try {
         await axios.put(`http://localhost:8080/api/prendas/${id}/inactivar`);
@@ -179,8 +186,8 @@ function InventarioPrendas() {
     }
   };
 
-  // Función para Activar prenda lógicamente (Estado 1)
   const handleActivar = async (id) => {
+    if (!esAdmin) return;
     try {
       await axios.put(`http://localhost:8080/api/prendas/${id}/activar`);
       cargarDatos();
@@ -205,7 +212,6 @@ function InventarioPrendas() {
 
   return (
     <div className="inventario-content">
-      {/* MÉTRICAS / DASHBOARD HEADER */}
       <div className="dashboard-cards-grid">
         <div className="dash-card">
           <h3>PANEL</h3>
@@ -226,24 +232,27 @@ function InventarioPrendas() {
         </div>
       </div>
 
-      {/* SECCIÓN DE CATÁLOGO */}
       <div className="catalogo-header-section">
         <h2>Catálogo de Prendas {mostrarInactivas ? '(Inactivas)' : '(Activas)'}</h2>
         <div className="action-header-buttons" style={{ display: 'flex', gap: '10px' }}>
-          <button 
-            className="btn-secundario" 
-            onClick={() => setMostrarInactivas(!mostrarInactivas)}
-            style={{ background: '#6c757d', color: '#fff' }}
-          >
-            {mostrarInactivas ? 'Ver Prendas Activas' : 'Prendas Inactivas'}
-          </button>
-          <button className="btn-agregar" onClick={() => { limpiarFormulario(); setMostrarModal(true); }}>
-            + Agregar Prenda
-          </button>
+          {esAdmin && (
+            <button 
+              className="btn-secundario" 
+              onClick={() => setMostrarInactivas(!mostrarInactivas)}
+              style={{ background: '#6c757d', color: '#fff' }}
+            >
+              {mostrarInactivas ? 'Ver Prendas Activas' : 'Prendas Inactivas'}
+            </button>
+          )}
+          {/* Solo admin puede agregar nuevas prendas */}
+          {esAdmin && (
+            <button className="btn-agregar" onClick={() => { limpiarFormulario(); setMostrarModal(true); }}>
+              + Agregar Prenda
+            </button>
+          )}
         </div>
       </div>
 
-      {/* FILTROS */}
       <div className="filter-search-row">
         <div className="search-box-group">
           <label>BUSCAR POR CÓDIGO DE BARRAS O NOMBRE</label>
@@ -269,7 +278,6 @@ function InventarioPrendas() {
 
       {error && <p className="error-msg">{error}</p>}
 
-      {/* REJILLA DE TARJETAS DE PRENDAS */}
       <div className="grid-prendas">
         {prendasFiltradas.length === 0 ? (
           <p className="no-data">No se encontraron prendas {mostrarInactivas ? 'inactivas' : 'activas'}.</p>
@@ -300,14 +308,17 @@ function InventarioPrendas() {
                     <span style={{ color: estadoActual === 1 ? '#28a745' : '#dc3545', fontWeight: 'bold' }}>
                       {estadoActual === 1 ? 'Activo' : 'Inactivo'}
                     </span>
-                    <div className="card-btns">
-                      <button onClick={() => iniciarEdicion(p)} className="btn-accion-txt">Editar</button>
-                      {estadoActual === 1 ? (
-                        <button onClick={() => handleInactivar(p.idPrenda || p.id_prenda)} className="btn-accion-txt eliminar" style={{ color: '#ffc107' }}>Inactivar</button>
-                      ) : (
-                        <button onClick={() => handleActivar(p.idPrenda || p.id_prenda)} className="btn-accion-txt" style={{ color: '#28a745' }}>Activar</button>
-                      )}
-                    </div>
+                    {/* Botones de acción limitados solo para Admin */}
+                    {esAdmin && (
+                      <div className="card-btns">
+                        <button onClick={() => iniciarEdicion(p)} className="btn-accion-txt">Editar</button>
+                        {estadoActual === 1 ? (
+                          <button onClick={() => handleInactivar(p.idPrenda || p.id_prenda)} className="btn-accion-txt eliminar" style={{ color: '#ffc107' }}>Inactivar</button>
+                        ) : (
+                          <button onClick={() => handleActivar(p.idPrenda || p.id_prenda)} className="btn-accion-txt" style={{ color: '#28a745' }}>Activar</button>
+                        )}
+                      </div>
+                    )}
                   </div>
                 </div>
               </div>
@@ -316,8 +327,7 @@ function InventarioPrendas() {
         )}
       </div>
 
-      {/* MODAL / POP-UP */}
-      {mostrarModal && (
+      {mostrarModal && esAdmin && (
         <div className="modal-overlay">
           <div className="modal-content-wide">
             <div className="modal-header">
