@@ -31,6 +31,11 @@ function formatCurrency(value) {
   }).format(numero);
 }
 
+function getCarritoKey(usuario) {
+  const identificador = usuario?.idUsuario || usuario?.id_usuario || usuario?.id || usuario?.correo || usuario?.email;
+  return identificador ? `carrito_${encodeURIComponent(String(identificador).trim().toLowerCase())}` : null;
+}
+
 function getImageSrc(value) {
   if (!value) return null;
   if (value.startsWith('http') || value.startsWith('data:')) return value;
@@ -52,14 +57,24 @@ function getSafePrenda(prenda = {}) {
 
 const GENRES = ['Todos', 'Hombre', 'Mujer', 'Unisex', 'Niño', 'Niña'];
 
-const GENRE_ICON = {
-  Todos: '✨',
-  Hombre: '🧥',
-  Mujer: '👗',
-  Unisex: '🔁',
-  Niño: '🧢',
-  Niña: '🎀',
-};
+function GenreIcon({ genero, color = 'currentColor' }) {
+  const commonProps = { width: 18, height: 18, viewBox: '0 0 24 24', fill: 'none', stroke: color, strokeWidth: 1.8, strokeLinecap: 'round', strokeLinejoin: 'round', 'aria-hidden': true };
+
+  if (genero === 'Todos') return <svg {...commonProps}><path d="m12 3 1.2 5.1L18 9.5l-4.8 1.4L12 16l-1.2-5.1L6 9.5l4.8-1.4L12 3Z" /><path d="m19 15 .6 2.4L22 18l-2.4.6L19 21l-.6-2.4L16 18l2.4-.6L19 15Z" /></svg>;
+  if (genero === 'Hombre') return <svg {...commonProps}><path d="m8 4 4 2 4-2 4 3-2.5 3-2-1.3V21h-7V8.7L6 10 4 7l4-3Z" /><path d="M10 6h4" /></svg>;
+  if (genero === 'Mujer') return <svg {...commonProps}><path d="M10 3h4l.7 3.2L17 9l3 10.5c.2.8-.4 1.5-1.2 1.5H5.2c-.8 0-1.4-.7-1.2-1.5L7 9l2.3-2.8L10 3Z" /><path d="M9.5 6.2h5" /></svg>;
+  if (genero === 'Unisex') return <svg {...commonProps}><path d="M4 8h14l-3-3" /><path d="M20 16H6l3 3" /></svg>;
+  if (genero === 'Niño') return <svg {...commonProps}><path d="M4 11a8 8 0 0 1 16 0" /><path d="M3 11h18" /><path d="M7 11v2" /></svg>;
+  return <svg {...commonProps}><path d="M12 20V9" /><path d="m12 9-3-3-3 3 3 3 3-3 3 3 3-3-3-3-3 3Z" /></svg>;
+}
+
+function SearchIcon() {
+  return <svg width="19" height="19" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" aria-hidden="true"><circle cx="10.8" cy="10.8" r="6.8" /><path d="m16 16 5 5" /></svg>;
+}
+
+function CartIcon() {
+  return <svg width="19" height="19" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.8" strokeLinecap="round" strokeLinejoin="round" aria-hidden="true"><path d="M3 4h2l2.2 11.2a2 2 0 0 0 2 1.6h7.5a2 2 0 0 0 1.9-1.5L20 8H6" /><circle cx="9" cy="20" r="1" /><circle cx="17" cy="20" r="1" /></svg>;
+}
 
 const normalizeText = (value = '') =>
   String(value)
@@ -88,20 +103,22 @@ export default function CatalogoCliente({ onVolverInicio, onAgregarCarrito, onVe
   const [cartBump, setCartBump] = useState(false);
   const [cantidades, setCantidades] = useState({});
   const [carritoAbierto, setCarritoAbierto] = useState(false);
-  const [carrito, setCarrito] = useState(() => {
-    try {
-      const raw = localStorage.getItem('carrito');
-      return raw ? JSON.parse(raw) : [];
-    } catch {
-      return [];
-    }
-  });
   const [usuarioActual, setUsuarioActual] = useState(() => {
     try {
       const raw = localStorage.getItem('usuarioActual');
       return raw ? JSON.parse(raw) : null;
     } catch {
       return null;
+    }
+  });
+  const claveCarrito = getCarritoKey(usuarioActual);
+  const [carrito, setCarrito] = useState(() => {
+    try {
+      if (!claveCarrito) return [];
+      const raw = localStorage.getItem(claveCarrito);
+      return raw ? JSON.parse(raw) : [];
+    } catch {
+      return [];
     }
   });
 
@@ -143,15 +160,27 @@ export default function CatalogoCliente({ onVolverInicio, onAgregarCarrito, onVe
   }, []);
 
   useEffect(() => {
+    if (!usuarioActual) {
+      if (carrito.length > 0) setCarrito([]);
+      setCartCount(0);
+      try {
+        localStorage.removeItem('carrito');
+      } catch {
+        // Ignorado si el navegador no permite almacenamiento.
+      }
+      return;
+    }
+
     try {
-      localStorage.setItem('carrito', JSON.stringify(carrito));
+      localStorage.removeItem('carrito');
+      localStorage.setItem(claveCarrito, JSON.stringify(carrito));
     } catch {
       // Ignorado si el navegador no permite almacenamiento.
     }
     setCartCount(
       carrito.reduce((total, item) => total + Number(item.cantidad || 0), 0)
     );
-  }, [carrito]);
+  }, [carrito, usuarioActual, claveCarrito]);
 
   const prendasFiltradas = useMemo(() => {
     const texto = normalizeText(busqueda.trim());
@@ -415,7 +444,7 @@ export default function CatalogoCliente({ onVolverInicio, onAgregarCarrito, onVe
                 boxShadow: '0 10px 20px rgba(28,15,27,0.18)',
               }}
             >
-              <span className="cc-cart-icon" style={{ fontSize: '1.05rem' }}>🛍️</span>
+              <span className="cc-cart-icon"><CartIcon /></span>
               Carrito
               <span style={{
                 minWidth: '20px',
@@ -512,7 +541,7 @@ export default function CatalogoCliente({ onVolverInicio, onAgregarCarrito, onVe
                         {item.imagen ? (
                           <img src={item.imagen} alt={item.nombre} style={{ width: '100%', height: '100%', objectFit: 'cover' }} />
                         ) : (
-                          <span style={{ fontSize: '1.2rem' }}>🧥</span>
+                          <span style={{ color: palette.plum }}><GenreIcon genero="Hombre" color="currentColor" /></span>
                         )}
                       </div>
 
@@ -588,6 +617,10 @@ export default function CatalogoCliente({ onVolverInicio, onAgregarCarrito, onVe
 
                 <button
                   type="button"
+                  onClick={() => {
+                    setCarritoAbierto(false);
+                    window.location.href = '/facturacion';
+                  }}
                   style={{
                     marginTop: '0.2rem',
                     background: `linear-gradient(135deg, ${palette.fucsia} 0%, ${palette.fucsiaDeep} 100%)`,
@@ -615,7 +648,7 @@ export default function CatalogoCliente({ onVolverInicio, onAgregarCarrito, onVe
                 padding: '1.5rem',
               }}>
                 <div>
-                  <div style={{ fontSize: '2.2rem', marginBottom: '0.7rem' }}>🛒</div>
+                  <div style={{ color: palette.fucsia, marginBottom: '0.7rem' }}><CartIcon /></div>
                   <p style={{ margin: 0, color: palette.plum, fontSize: '1.05rem', fontWeight: 700, lineHeight: 1.5 }}>
                     {cartEmptyMessage}
                   </p>
@@ -698,7 +731,7 @@ export default function CatalogoCliente({ onVolverInicio, onAgregarCarrito, onVe
             maxWidth: '460px',
             marginBottom: '1.6rem',
           }}>
-            <span style={{ fontSize: '1.15rem' }}>🔎</span>
+            <span style={{ color: palette.white, display: 'inline-flex' }}><SearchIcon /></span>
             <input
               type="text"
               value={busqueda}
@@ -750,7 +783,7 @@ export default function CatalogoCliente({ onVolverInicio, onAgregarCarrito, onVe
                     boxShadow: activo ? '0 10px 20px rgba(21,11,20,0.25)' : 'none',
                   }}
                 >
-                  <span aria-hidden="true">{GENRE_ICON[genero]}</span>
+                  <span aria-hidden="true" style={{ display: 'inline-flex' }}><GenreIcon genero={genero} /></span>
                   {genero}
                 </button>
               );

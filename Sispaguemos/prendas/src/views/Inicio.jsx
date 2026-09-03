@@ -293,6 +293,9 @@ export default function InicioPage() {
           <a href="#hombre" style={{ color: 'inherit', textDecoration: 'none' }}>Hombre</a>
           <a href="#unisex" style={{ color: 'inherit', textDecoration: 'none' }}>Unisex</a>
           <a href="#historia" style={{ color: 'inherit', textDecoration: 'none' }}>Nuestra historia</a>
+          {String(usuarioActual?.rol || '').trim().toLowerCase().includes('cliente') && (
+            <Link to="/compras" style={{ color: 'inherit', textDecoration: 'none' }}>Compras</Link>
+          )}
         </nav>
 
         <div style={{ display: 'flex', alignItems: 'center', gap: '1rem' }}>
@@ -453,7 +456,7 @@ export default function InicioPage() {
               }}>
                 Iniciar Sesion
               </Link>
-              <Link to="/prendas" style={{
+              <Link to="/catalogo-cliente" style={{
                 border: '2px solid rgba(255,255,255,0.6)',
                 color: '#ffffff',
                 padding: '0.8rem 1.7rem',
@@ -528,10 +531,9 @@ export default function InicioPage() {
             const isHovered = hoverCategory === cat.id;
             const { Icon } = cat;
             return (
-              <a
+              <Link
                 key={cat.id}
-                id={cat.id}
-                href={`#${cat.id}`}
+                to={`/catalogo-cliente?genero=${encodeURIComponent(cat.nombre)}`}
                 onMouseEnter={() => setHoverCategory(cat.id)}
                 onMouseLeave={() => setHoverCategory(null)}
                 style={{
@@ -555,7 +557,7 @@ export default function InicioPage() {
                   <div style={{ fontWeight: '700', fontSize: '1.2rem' }}>{cat.nombre}</div>
                   <div style={{ fontSize: '0.82rem', opacity: 0.85 }}>{cat.cantidad}</div>
                 </div>
-              </a>
+              </Link>
             );
           })}
         </div>
@@ -621,7 +623,7 @@ export default function InicioPage() {
             <p style={{ color: palette.slate, fontSize: '1rem', lineHeight: '1.7', margin: '0 0 1.5rem 0' }}>
               {activeLookData.desc}
             </p>
-            <Link to="/catalogo" style={{
+            <Link to="/catalogo-cliente" style={{
               color: palette.fucsiaDark,
               fontWeight: '700',
               fontSize: '0.9rem',

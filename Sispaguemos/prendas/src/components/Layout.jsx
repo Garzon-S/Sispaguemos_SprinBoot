@@ -51,6 +51,12 @@ function Layout() {
             </Link>
           )}
 
+          {esAdmin && (
+            <Link to="/pedidos" className={`nav-item ${isActive('/pedidos') ? 'active' : ''}`}>
+              Pedidos
+            </Link>
+          )}
+
           {/* Entradas y Salidas (Visible para ambos o condicional si gustas) */}
           <Link to="/movimientos" className={`nav-item ${isActive('/movimientos') ? 'active' : ''}`}>
             Entradas y Salidas

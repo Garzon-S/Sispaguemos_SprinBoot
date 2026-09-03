@@ -1,8 +1,65 @@
 // pages/DashboardAdmin.jsx
 import { Link } from 'react-router-dom';
+import { useEffect, useState } from 'react';
+import axios from 'axios';
 import '../styles/Admin.css';
 
+const estiloEstado = (estado) => {
+  if (estado === 'Listo en tienda') return { backgroundColor: '#e4f3e5', borderColor: '#70ad75', color: '#27602c' };
+  if (estado === 'Cancelado') return { backgroundColor: '#fcebea', borderColor: '#d16b5d', color: '#8d2d22' };
+  return { backgroundColor: '#fff1c9', borderColor: '#e0ad35', color: '#805b0b' };
+};
+
 function DashboardAdmin() {
+  const [pedidos, setPedidos] = useState([]);
+  const [usuarios, setUsuarios] = useState([]);
+  const [cargandoPedidos, setCargandoPedidos] = useState(true);
+  const [errorPedidos, setErrorPedidos] = useState('');
+  const [actualizandoPedido, setActualizandoPedido] = useState(null);
+
+  useEffect(() => {
+    Promise.all([
+      axios.get('http://localhost:8080/api/pedidos'),
+      axios.get('http://localhost:8080/api/usuarios'),
+    ])
+      .then(([pedidosResponse, usuariosResponse]) => {
+        setPedidos(Array.isArray(pedidosResponse.data) ? pedidosResponse.data : []);
+        setUsuarios(Array.isArray(usuariosResponse.data) ? usuariosResponse.data : []);
+      })
+      .catch(() => setErrorPedidos('No se pudieron cargar los pedidos.'))
+      .finally(() => setCargandoPedidos(false));
+  }, []);
+
+  useEffect(() => {
+    if (window.location.hash === '#pedidos') {
+      document.getElementById('pedidos')?.scrollIntoView({ behavior: 'smooth', block: 'start' });
+    }
+  }, []);
+
+  const actualizarEstadoPedido = async (idPedido, estado) => {
+    setActualizandoPedido(idPedido);
+    try {
+      const response = await axios.put(`http://localhost:8080/api/pedidos/${idPedido}/estado`, { estado });
+      setPedidos((anteriores) => anteriores.map((pedido) => pedido.idPedido === idPedido ? response.data : pedido));
+    } catch {
+      setErrorPedidos('No se pudo actualizar el estado del pedido.');
+    } finally {
+      setActualizandoPedido(null);
+    }
+  };
+
+  const obtenerNombreCliente = (idUsuario) => {
+    const usuario = usuarios.find((item) => (item.idUsuario || item.id_usuario || item.id) === idUsuario);
+    if (!usuario) return `Usuario #${idUsuario}`;
+    return `${usuario.primerNom || usuario.primer_nom || ''} ${usuario.primerApelli || usuario.primer_apelli || ''}`.trim() || usuario.correo;
+  };
+
+  const formatearFecha = (fecha) => {
+    const fechaPedido = new Date(fecha);
+    return Number.isNaN(fechaPedido.getTime()) ? fecha : fechaPedido.toLocaleString('es-CO');
+  };
+
+  const formatearMoneda = (monto) => new Intl.NumberFormat('es-CO', { style: 'currency', currency: 'COP', maximumFractionDigits: 0 }).format(Number(monto || 0));
   // Datos de ejemplo para el dashboard
   const totalProductos = 10;
   const productosActivos = 10;
@@ -127,6 +184,61 @@ function DashboardAdmin() {
           </div>
         </div>
       </div>
+
+      <section id="pedidos" className="dashboard-card orders-card">
+        <div className="card-header orders-header">
+          <div>
+            <h3>📋 PEDIDOS</h3>
+            <span className="card-subtitle">Compras realizadas desde el catálogo cliente</span>
+          </div>
+          <strong>{pedidos.length} pedido{pedidos.length === 1 ? '' : 's'}</strong>
+        </div>
+
+        {cargandoPedidos && <p className="orders-message">Cargando pedidos...</p>}
+        {!cargandoPedidos && errorPedidos && <p className="orders-message orders-error">{errorPedidos}</p>}
+        {!cargandoPedidos && !errorPedidos && pedidos.length === 0 && <p className="orders-message">Todavía no hay pedidos registrados.</p>}
+        {!cargandoPedidos && !errorPedidos && pedidos.length > 0 && (
+          <div className="orders-table-wrapper">
+            <table className="orders-table">
+              <thead>
+                <tr>
+                  <th>Pedido</th>
+                  <th>Cliente</th>
+                  <th>Monto</th>
+                  <th>Fecha y hora</th>
+                  <th>Método de pago</th>
+                  <th>Estado</th>
+                </tr>
+              </thead>
+              <tbody>
+                {pedidos.map((pedido) => (
+                  <tr key={pedido.idPedido}>
+                    <td>#{pedido.idPedido}</td>
+                    <td>{obtenerNombreCliente(pedido.fkIdUsuarioCliente)}</td>
+                    <td className="order-amount">{formatearMoneda(pedido.totalEstimado)}</td>
+                    <td>{formatearFecha(pedido.fechaPedido)}</td>
+                    <td>{pedido.metodoPago || 'PayPal Sandbox'}</td>
+                    <td>
+                      <select
+                        value={pedido.estado || 'Pendiente'}
+                        disabled={actualizandoPedido === pedido.idPedido}
+                        onChange={(event) => actualizarEstadoPedido(pedido.idPedido, event.target.value)}
+                        className={`order-status order-status-${String(pedido.estado || 'Pendiente').toLowerCase().replaceAll(' ', '-')}`}
+                        style={estiloEstado(pedido.estado || 'Pendiente')}
+                        aria-label={`Estado del pedido ${pedido.idPedido}`}
+                      >
+                        <option className="order-option-pendiente">Pendiente</option>
+                        <option className="order-option-listo">Listo en tienda</option>
+                        <option className="order-option-cancelado">Cancelado</option>
+                      </select>
+                    </td>
+                  </tr>
+                ))}
+              </tbody>
+            </table>
+          </div>
+        )}
+      </section>
 
       {/* RESUMEN RÁPIDO */}
       <div className="dashboard-quick-stats">

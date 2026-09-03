@@ -10,6 +10,10 @@ import Bodega from './views/Bodega';
 import Usuarios from './views/Usuarios';
 import PerfilUsuario from './views/PerfilUsuario';
 import VentasEmpleado from './views/VentasEmpleado'; // <--- Importamos la vista real de ventas POS
+import CatalogoCliente from './views/CatalogoCliente';
+import Facturacion from './views/Facturacion';
+import Compras from './views/Compras';
+import PedidosAdmin from './views/PedidosAdmin';
 
 const normalizeRole = (value) => String(value ?? '').trim().toLowerCase();
 
@@ -42,6 +46,9 @@ function App() {
         <Route path="/" element={<Inicio />} />
         <Route path="/iniciosesionregistro" element={<IniciosesionRegistro />} />
         <Route path="/perfil" element={<PerfilUsuario />} />
+        <Route path="/catalogo-cliente" element={<CatalogoCliente />} />
+        <Route path="/facturacion" element={<Facturacion />} />
+        <Route path="/compras" element={<Compras />} />
 
         <Route element={<ProtectedAdminLayout />}>
           <Route path="/dashboard" element={<DashboardAdmin />} />
@@ -50,6 +57,7 @@ function App() {
           <Route path="/movimientos" element={<MovimientosInventario />} />
           <Route path="/ventas" element={<VentasEmpleado />} /> {/* <--- Conectado a la vista de empleado */}
           <Route path="/usuarios" element={<Usuarios />} />
+          <Route path="/pedidos" element={<PedidosAdmin />} />
         </Route>
       </Routes>
     </BrowserRouter>

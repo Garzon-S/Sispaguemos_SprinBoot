@@ -1,3 +1,136 @@
+.orders-card {
+  margin-top: 2rem;
+}
+
+.orders-page-card {
+  margin-top: 0;
+}
+
+.orders-back-button,
+.orders-retry-button {
+  border: 1px solid #d81b60;
+  border-radius: 10px;
+  background: transparent;
+  color: #d81b60;
+  cursor: pointer;
+  font-weight: 700;
+  padding: 0.6rem 0.9rem;
+}
+
+.orders-back-button {
+  margin-bottom: 1.2rem;
+}
+
+.orders-retry-button {
+  background: #d81b60;
+  color: #fff;
+  margin-top: 0.5rem;
+}
+
+.orders-header {
+  align-items: center;
+  display: flex;
+  justify-content: space-between;
+  gap: 1rem;
+}
+
+.orders-message {
+  color: #6b5768;
+  margin: 1.5rem 0 0;
+  text-align: center;
+}
+
+.orders-error {
+  color: #c0392b;
+}
+
+.orders-table-wrapper {
+  margin-top: 1rem;
+  overflow-x: auto;
+}
+
+.orders-table {
+  border-collapse: collapse;
+  min-width: 850px;
+  width: 100%;
+}
+
+.orders-table th,
+.orders-table td {
+  border-bottom: 1px solid #f0e4e8;
+  padding: 0.85rem 0.7rem;
+  text-align: left;
+  white-space: nowrap;
+}
+
+.orders-table th {
+  color: #8c6476;
+  font-size: 0.72rem;
+  letter-spacing: 0.04em;
+  text-transform: uppercase;
+}
+
+.orders-table td {
+  color: #2b1830;
+  font-size: 0.86rem;
+}
+
+.orders-table .order-amount {
+  color: #d21f68;
+  font-weight: 800;
+}
+
+.order-status {
+  appearance: auto;
+  border: 2px solid transparent;
+  border-radius: 10px;
+  color: #2b1830;
+  cursor: pointer;
+  font-size: 0.78rem;
+  font-weight: 700;
+  padding: 0.5rem 0.65rem;
+  min-width: 145px;
+}
+
+.order-status-pendiente {
+  background: #fff1c9;
+  border-color: #e0ad35;
+  color: #805b0b;
+}
+
+.order-status-listo-en-tienda {
+  background: #e4f3e5;
+  border-color: #70ad75;
+  color: #27602c;
+}
+
+.order-status-cancelado {
+  background: #fcebea;
+  border-color: #d16b5d;
+  color: #8d2d22;
+}
+
+.order-option-pendiente {
+  background: #fff1c9;
+  color: #805b0b;
+}
+
+.order-option-listo {
+  background: #e4f3e5;
+  color: #27602c;
+}
+
+.order-option-cancelado {
+  background: #fcebea;
+  color: #8d2d22;
+}
+
+@media (max-width: 700px) {
+  .orders-header {
+    align-items: flex-start;
+    flex-direction: column;
+  }
+}
 /* ============================================
    DASHBOARD ADMIN - ESTILO PAGUE MENOS
    Sin bordes horribles, centrado y limpio
@@ -651,4 +784,26 @@ html, body {
   .product-name {
     font-size: 12px;
   }
+}
+
+.order-detail-button {
+  border: 0;
+  border-radius: 8px;
+  background: #f7e1ec;
+  color: #b51d5c;
+  cursor: pointer;
+  font-weight: 700;
+  padding: 0.45rem 0.6rem;
+}
+
+.order-details-row td {
+  background: #fffafc;
+  color: #6b5768;
+  white-space: normal;
+}
+
+.order-details-list {
+  display: grid;
+  gap: 0.35rem;
+  margin-top: 0.55rem;
 }
