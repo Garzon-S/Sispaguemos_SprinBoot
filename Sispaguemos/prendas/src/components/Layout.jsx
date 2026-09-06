@@ -11,7 +11,7 @@ function Layout() {
   const rol = String(usuarioGuardado?.rol || usuarioGuardado?.tipoRol || 'empleado').trim().toLowerCase();
   const esAdmin = rol === 'administrador' || rol === 'admin';
 
-  const nombreCompleto = `${usuarioGuardado.primerNom || usuarioGuardado.primer_nom || 'Usuario'} ${usuarioGuardado.primerApelli || usuarioGuardado.primer_apelli || ''}`.trim();
+  const nombreCompleto = `${usuarioGuardado.nombreUsuario || usuarioGuardado.primerNom || 'Usuario'} ${usuarioGuardado.apellidoUsuario || usuarioGuardado.primerApelli || ''}`.trim();
 
   const isActive = (path) => {
     return location.pathname === path || location.pathname.startsWith(path + '/');
@@ -27,7 +27,7 @@ function Layout() {
       <aside className="sidebar">
         <div className="sidebar-brand">
           <span className="brand-badge">PM</span>
-          <h2>PAGUE <br/><strong>MENOS</strong></h2>
+          <h2>PAGUE <br /><strong>MENOS</strong></h2>
         </div>
 
         <div className="sidebar-user">
@@ -44,7 +44,19 @@ function Layout() {
             </Link>
           )}
 
-          {/* MÓDULO DE VENTAS: Exclusivo para Empleados (Oculto para Administrador) */}
+          {/* Módulos de Proveedores y Facturas (Exclusivos Admin) */}
+          {esAdmin && (
+            <>
+              <Link to="/proveedores" className={`nav-item ${isActive('/proveedores') ? 'active' : ''}`}>
+                Proveedores
+              </Link>
+              <Link to="/facturas-proveedor" className={`nav-item ${isActive('/facturas-proveedor') ? 'active' : ''}`}>
+                Facturas Proveedor
+              </Link>
+            </>
+          )}
+
+          {/* MÓDULO DE VENTAS: Exclusivo para Empleados */}
           {!esAdmin && (
             <Link to="/ventas" className={`nav-item ${isActive('/ventas') ? 'active' : ''}`}>
               Ventas
@@ -57,9 +69,14 @@ function Layout() {
             </Link>
           )}
 
-          {/* Entradas y Salidas (Visible para ambos o condicional si gustas) */}
+          {/* Entradas y Salidas */}
           <Link to="/movimientos" className={`nav-item ${isActive('/movimientos') ? 'active' : ''}`}>
             Entradas y Salidas
+          </Link>
+
+          {/* Kardex (Control de inventario detallado) */}
+          <Link to="/kardex" className={`nav-item ${isActive('/kardex') ? 'active' : ''}`}>
+            Kardex
           </Link>
 
           {/* Módulos compartidos: Bodega y Catálogo */}
@@ -73,11 +90,9 @@ function Layout() {
 
           {/* Módulos exclusivos y avanzados de Administrador */}
           {esAdmin && (
-            <>
-              <Link to="/usuarios" className={`nav-item ${isActive('/usuarios') ? 'active' : ''}`}>
-                Usuarios
-              </Link>
-            </>
+            <Link to="/usuarios" className={`nav-item ${isActive('/usuarios') ? 'active' : ''}`}>
+              Usuarios
+            </Link>
           )}
         </nav>
 

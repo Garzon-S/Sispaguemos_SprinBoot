@@ -31,12 +31,13 @@ public class BodegaController {
     @PostMapping
     public ResponseEntity<?> guardarBodega(@Valid @RequestBody Bodega bodega) {
         try {
-            bodega.setFechaActualizacion(LocalDateTime.now()); // Asignar fecha al crear
+            bodega.setFechaActualizacion(LocalDateTime.now()); 
             Bodega nuevaBodega = bodegaRepository.save(bodega);
 
-            Prenda prenda = prendaRepository.findById(bodega.getIdPrenda()).orElse(null);
+            // Convertimos el idPrenda a Integer para que coincida con PrendaRepository
+            Prenda prenda = prendaRepository.findById(Integer.valueOf(bodega.getIdPrenda())).orElse(null);
             if (prenda != null) {
-                prenda.setEstado(1);
+                prenda.setEstado("1"); // Cambiado a String ya que el estado en Prenda ahora es String
                 prendaRepository.save(prenda);
             }
 
@@ -46,19 +47,27 @@ public class BodegaController {
         }
     }
 
-    @PutMapping("/{id}")
+@PutMapping("/{id}")
     public ResponseEntity<?> actualizarBodega(@PathVariable Long id, @Valid @RequestBody Bodega bodegaDetalles) {
-        Bodega bodega = bodegaRepository.findById(id)
-                .orElseThrow(() -> new RuntimeException("Registro de bodega no encontrado con id: " + id));
-        
-        bodega.setStockActual(bodegaDetalles.getStockActual());
-        bodega.setStockMinimo(bodegaDetalles.getStockMinimo());
-        bodega.setStockMaximo(bodegaDetalles.getStockMaximo());
-        bodega.setPrecioUnitario(bodegaDetalles.getPrecioUnitario());
-        bodega.setFechaActualizacion(LocalDateTime.now()); // <--- Actualiza la fecha al modificar
+        try {
+            Bodega bodega = bodegaRepository.findById(id)
+                    .orElseThrow(() -> new RuntimeException("Registro de bodega no encontrado con id: " + id));
+            
+            bodega.setStockActual(bodegaDetalles.getStockActual());
+            bodega.setStockMinimo(bodegaDetalles.getStockMinimo());
+            bodega.setStockMaximo(bodegaDetalles.getStockMaximo());
+            
+            if (bodegaDetalles.getCostoPromedio() != null) {
+                bodega.setCostoPromedio(bodegaDetalles.getCostoPromedio());
+            }
+            
+            bodega.setFechaActualizacion(LocalDateTime.now());
 
-        Bodega actualizada = bodegaRepository.save(bodega);
-        return ResponseEntity.ok(actualizada);
+            Bodega actualizada = bodegaRepository.save(bodega);
+            return ResponseEntity.ok(actualizada);
+        } catch (Exception e) {
+            return ResponseEntity.badRequest().body("Error al actualizar bodega: " + e.getMessage());
+        }
     }
 
     @DeleteMapping("/{id}")

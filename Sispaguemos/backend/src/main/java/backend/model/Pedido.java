@@ -22,29 +22,29 @@ public class Pedido {
     @Column(name = "fecha_pedido", nullable = false)
     private LocalDateTime fechaPedido;
 
-    @Column(name = "total_estimado", nullable = false)
-    private Double totalEstimado;
+    @Column(name = "total_pedido", nullable = false)
+    private Double totalPedido;
 
-    @Column(name = "estado", nullable = false)
-    private String estado;
+    @Column(name = "estado_pedido", nullable = false)
+    private String estadoPedido;
 
-    @Column(name = "fk_id_usuario_cliente", nullable = false)
-    private Integer fkIdUsuarioCliente;
+    @Column(name = "fk_id_usuario", nullable = false)
+    private Integer fkIdUsuario;
 
     @PrePersist
     public void prePersist() {
         if (fechaPedido == null) fechaPedido = LocalDateTime.now();
-        if (estado == null || estado.isBlank()) estado = "Pendiente";
+        if (estadoPedido == null || estadoPedido.isBlank()) estadoPedido = "Pendiente";
     }
 
     public Long getIdPedido() { return idPedido; }
     public void setIdPedido(Long idPedido) { this.idPedido = idPedido; }
     public LocalDateTime getFechaPedido() { return fechaPedido; }
     public void setFechaPedido(LocalDateTime fechaPedido) { this.fechaPedido = fechaPedido; }
-    public Double getTotalEstimado() { return totalEstimado; }
-    public void setTotalEstimado(Double totalEstimado) { this.totalEstimado = totalEstimado; }
-    public String getEstado() { return estado; }
-    public void setEstado(String estado) { this.estado = estado; }
-    public Integer getFkIdUsuarioCliente() { return fkIdUsuarioCliente; }
-    public void setFkIdUsuarioCliente(Integer fkIdUsuarioCliente) { this.fkIdUsuarioCliente = fkIdUsuarioCliente; }
+    public Double getTotalPedido() { return totalPedido; }
+    public void setTotalPedido(Double totalPedido) { this.totalPedido = totalPedido; }
+    public String getEstadoPedido() { return estadoPedido; }
+    public void setEstadoPedido(String estadoPedido) { this.estadoPedido = estadoPedido; }
+    public Integer getFkIdUsuario() { return fkIdUsuario; }
+    public void setFkIdUsuario(Integer fkIdUsuario) { this.fkIdUsuario = fkIdUsuario; }
 }

@@ -1,6 +1,6 @@
 import { useEffect, useState } from 'react';
-import { 
-  obtenerUsuarios, crearUsuario, actualizarUsuario 
+import {
+  obtenerUsuarios, crearUsuario, actualizarUsuario
 } from '../services/usuarioService';
 import '../App.css';
 
@@ -55,7 +55,7 @@ export default function UsuariosPage() {
 
     if (name === 'imagenPerfil') {
       const file = e.target.files[0];
-      
+
       if (file && file.size > 500 * 1024) {
         alert('La imagen es demasiado grande. El tamaño máximo es 500KB');
         e.target.value = '';
@@ -112,7 +112,7 @@ export default function UsuariosPage() {
 
   const handleSubmit = async (e) => {
     e.preventDefault();
-    
+
     if (!formData.primerNom.trim() || !formData.primerApelli.trim() || !formData.correo.trim()) {
       alert('Por favor completa los campos obligatorios (Primer Nombre, Primer Apellido, Correo)');
       return;
@@ -124,24 +124,25 @@ export default function UsuariosPage() {
     }
 
     try {
-      // Creamos un objeto FormData para enviar archivos y texto correctamente
       const dataToSend = new FormData();
-      dataToSend.append('primerNom', formData.primerNom);
-      dataToSend.append('segundNom', formData.segundNom || '');
-      dataToSend.append('primerApelli', formData.primerApelli);
-      dataToSend.append('segundApelli', formData.segundApelli || '');
-      dataToSend.append('correo', formData.correo);
+      // Coincidencia exacta con los @RequestParam del UsuarioController
+      dataToSend.append('nombreUsuario', formData.primerNom.trim());
+      dataToSend.append('apellidoUsuario', formData.primerApelli.trim());
+      dataToSend.append('correo', formData.correo.trim());
+
       if (formData.contrasena && formData.contrasena.trim()) {
         dataToSend.append('contrasena', formData.contrasena);
       }
-      dataToSend.append('estado', 1);
 
-      // Solo agregamos la imagen si el usuario seleccionó una nueva
+      dataToSend.append('estado', 'Activo');
+      dataToSend.append('fkIdRol', '3'); // Rol cliente por defecto o el que corresponda
+
       if (formData.imagenPerfil) {
         dataToSend.append('imagenPerfil', formData.imagenPerfil);
       }
 
       if (editandoId) {
+        // Al actualizar, aseguramos enviar los campos obligatorios que el backend requiere
         await actualizarUsuario(editandoId, dataToSend);
         alert('Usuario actualizado exitosamente');
       } else {
@@ -159,10 +160,10 @@ export default function UsuariosPage() {
   const handleEdit = (usuario) => {
     setEditandoId(usuario.id);
     setFormData({
-      primerNom: usuario.primerNom || '',
-      segundNom: usuario.segundNom || '',
-      primerApelli: usuario.primerApelli || '',
-      segundApelli: usuario.segundApelli || '',
+      primerNom: usuario.nombreUsuario || '',
+      segundNom: '',
+      primerApelli: usuario.apellidoUsuario || '',
+      segundApelli: '',
       correo: usuario.correo || '',
       contrasena: '',
       imagenPerfil: null
@@ -176,20 +177,20 @@ export default function UsuariosPage() {
   };
 
   const handleCambiarEstado = async (usuario) => {
-    const nuevoEstado = usuario.estado === 1 ? 0 : 1;
-    const mensaje = nuevoEstado === 0 ? '¿Deseas inactivar este usuario?' : '¿Deseas activar este usuario?';
+    // La BD maneja ENUM('Activo', 'Inactivo') según tu esquema SQL
+    const nuevoEstado = usuario.estado === 'Activo' ? 'Inactivo' : 'Activo';
+    const mensaje = nuevoEstado === 'Inactivo' ? '¿Deseas inactivar este usuario?' : '¿Deseas activar este usuario?';
 
     if (window.confirm(mensaje)) {
       try {
-        await actualizarUsuario(usuario.id, {
-          primerNom: usuario.primerNom,
-          segundNom: usuario.segundNom,
-          primerApelli: usuario.primerApelli,
-          segundApelli: usuario.segundApelli,
-          correo: usuario.correo,
-          estado: nuevoEstado,
-          imagenPerfil: null
-        });
+        const dataToSend = new FormData();
+        // Enviamos exactamente los campos que el método @PutMapping exige en el backend
+        dataToSend.append('nombreUsuario', usuario.nombreUsuario || '');
+        dataToSend.append('apellidoUsuario', usuario.apellidoUsuario || '');
+        dataToSend.append('correo', usuario.correo || '');
+        dataToSend.append('estado', nuevoEstado);
+
+        await actualizarUsuario(usuario.id, dataToSend);
         cargarUsuarios();
       } catch (error) {
         console.error('Error al cambiar el estado del usuario:', error);
@@ -215,10 +216,10 @@ export default function UsuariosPage() {
   const usuariosFiltrados = usuarios.filter((u) => {
     const termino = busqueda.toLowerCase().trim();
     if (!termino) return true;
-    
+
     const id = u.id ? u.id.toString() : '';
-    const nombre = u.primerNom ? u.primerNom.toLowerCase() : '';
-    const apellido = u.primerApelli ? u.primerApelli.toLowerCase() : '';
+    const nombre = (u.nombreUsuario || '').toLowerCase();
+    const apellido = (u.apellidoUsuario || '').toLowerCase();
 
     return id.includes(termino) || nombre.includes(termino) || apellido.includes(termino);
   });
@@ -237,7 +238,7 @@ export default function UsuariosPage() {
   };
 
   return (
-    <div style={{ maxWidth: '980px', margin: '0 auto', padding: '2rem 1.5rem 3rem' }}>
+    <div style={{ maxWidth: '1100px', margin: '0 auto', padding: '2rem 1.5rem 3rem' }}>
       <div style={{
         backgroundColor: palette.white,
         borderRadius: '22px',
@@ -268,30 +269,30 @@ export default function UsuariosPage() {
           <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: '1rem' }}>
             <div>
               <label style={{ display: 'block', fontSize: '0.78rem', fontWeight: '700', color: palette.plum, marginBottom: '0.45rem', letterSpacing: '0.08em', textTransform: 'uppercase' }}>
-                Primer Nombre *
+                Nombre *
               </label>
-              <input type="text" name="primerNom" maxLength="30" value={formData.primerNom} onChange={handleChange} required style={inputStyle} />
+              <input type="text" name="primerNom" maxLength="100" value={formData.primerNom} onChange={handleChange} required style={inputStyle} />
             </div>
             <div>
               <label style={{ display: 'block', fontSize: '0.78rem', fontWeight: '700', color: palette.plum, marginBottom: '0.45rem', letterSpacing: '0.08em', textTransform: 'uppercase' }}>
                 Segundo Nombre
               </label>
-              <input type="text" name="segundNom" maxLength="30" value={formData.segundNom} onChange={handleChange} style={inputStyle} />
+              <input type="text" name="segundNom" maxLength="100" value={formData.segundNom} onChange={handleChange} style={inputStyle} />
             </div>
           </div>
 
           <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: '1rem' }}>
             <div>
               <label style={{ display: 'block', fontSize: '0.78rem', fontWeight: '700', color: palette.plum, marginBottom: '0.45rem', letterSpacing: '0.08em', textTransform: 'uppercase' }}>
-                Primer Apellido *
+                Apellido *
               </label>
-              <input type="text" name="primerApelli" maxLength="30" value={formData.primerApelli} onChange={handleChange} required style={inputStyle} />
+              <input type="text" name="primerApelli" maxLength="100" value={formData.primerApelli} onChange={handleChange} required style={inputStyle} />
             </div>
             <div>
               <label style={{ display: 'block', fontSize: '0.78rem', fontWeight: '700', color: palette.plum, marginBottom: '0.45rem', letterSpacing: '0.08em', textTransform: 'uppercase' }}>
                 Segundo Apellido
               </label>
-              <input type="text" name="segundApelli" maxLength="30" value={formData.segundApelli} onChange={handleChange} style={inputStyle} />
+              <input type="text" name="segundApelli" maxLength="100" value={formData.segundApelli} onChange={handleChange} style={inputStyle} />
             </div>
           </div>
 
@@ -299,7 +300,7 @@ export default function UsuariosPage() {
             <label style={{ display: 'block', fontSize: '0.78rem', fontWeight: '700', color: palette.plum, marginBottom: '0.45rem', letterSpacing: '0.08em', textTransform: 'uppercase' }}>
               Correo Electrónico *
             </label>
-            <input type="email" name="correo" maxLength="50" value={formData.correo} onChange={handleChange} required style={inputStyle} />
+            <input type="email" name="correo" maxLength="150" value={formData.correo} onChange={handleChange} required style={inputStyle} />
           </div>
 
           <div>
@@ -309,7 +310,7 @@ export default function UsuariosPage() {
             <input
               type="password"
               name="contrasena"
-              maxLength="30"
+              maxLength="255"
               value={formData.contrasena}
               onChange={handleChange}
               required={!editandoId}
@@ -376,88 +377,93 @@ export default function UsuariosPage() {
         </h2>
 
         <div style={{ display: 'flex', justifyContent: 'center', marginBottom: '1.5rem' }}>
-          <input 
-            type="text" 
-            placeholder="Buscar por ID o Nombre" 
-            value={busqueda} 
-            onChange={(e) => setBusqueda(e.target.value)} 
-            style={{ ...inputStyle, width: '52%', textAlign: 'center', backgroundColor: palette.soft }} 
+          <input
+            type="text"
+            placeholder="Buscar por ID o Nombre"
+            value={busqueda}
+            onChange={(e) => setBusqueda(e.target.value)}
+            style={{ ...inputStyle, width: '52%', textAlign: 'center', backgroundColor: palette.soft }}
           />
         </div>
 
         <div style={{ overflowX: 'auto' }}>
-          <table style={{ width: '100%', borderCollapse: 'collapse', textAlign: 'left', fontSize: '0.9rem' }}>
+          <table style={{ width: '100%', borderCollapse: 'collapse', textAlign: 'left', fontSize: '0.9rem', tableLayout: 'auto' }}>
             <thead>
               <tr style={{ borderBottom: `1px solid ${palette.border}`, color: palette.slate, textTransform: 'uppercase', fontSize: '0.74rem', letterSpacing: '0.06em' }}>
-                <th style={{ padding: '0.9rem 0.8rem' }}>ID</th>
-                <th style={{ padding: '0.9rem 0.8rem' }}>Imagen</th>
-                <th style={{ padding: '0.9rem 0.8rem' }}>Nombre Completo</th>
-                <th style={{ padding: '0.9rem 0.8rem' }}>Correo</th>
-                <th style={{ padding: '0.9rem 0.8rem' }}>Estado</th>
-                <th style={{ padding: '0.9rem 0.8rem', textAlign: 'center' }}>Acciones</th>
+                <th style={{ padding: '0.9rem 0.6rem', width: '6%' }}>ID</th>
+                <th style={{ padding: '0.9rem 0.6rem', width: '10%', textAlign: 'center' }}>Imagen</th>
+                <th style={{ padding: '0.9rem 0.8rem', width: '28%' }}>Nombre Completo</th>
+                <th style={{ padding: '0.9rem 0.8rem', width: '26%' }}>Correo</th>
+                <th style={{ padding: '0.9rem 0.6rem', width: '12%' }}>Estado</th>
+                <th style={{ padding: '0.9rem 0.6rem', width: '18%', textAlign: 'center' }}>Acciones</th>
               </tr>
             </thead>
             <tbody>
               {usuariosFiltrados.length > 0 ? (
-                usuariosFiltrados.map((u) => (
-                  <tr key={u.id} style={{ borderBottom: `1px solid ${palette.soft}` }}>
-                    <td style={{ padding: '0.9rem 0.8rem', color: palette.fucsiaDark, fontWeight: '800' }}>{u.id}</td>
-                    <td style={{ padding: '0.9rem 0.8rem', textAlign: 'center' }}>
-                      {u.imagenPerfil ? (
-                        <img src={`data:image/jpeg;base64,${u.imagenPerfil}`} alt="Perfil" style={{ width: '42px', height: '42px', borderRadius: '50%', objectFit: 'cover', border: `2px solid ${palette.border}` }} />
-                      ) : (
-                        <div style={{ width: '42px', height: '42px', borderRadius: '50%', backgroundColor: palette.sand, display: 'flex', alignItems: 'center', justifyContent: 'center', margin: '0 auto' }}>
-                          <span style={{ fontSize: '0.72rem', color: palette.slate, fontWeight: '700' }}>N/A</span>
+                usuariosFiltrados.map((u) => {
+                  const isActive = u.estado === 'Activo';
+                  return (
+                    <tr key={u.id} style={{ borderBottom: `1px solid ${palette.soft}` }}>
+                      <td style={{ padding: '0.9rem 0.6rem', color: palette.fucsiaDark, fontWeight: '800' }}>{u.id}</td>
+                      <td style={{ padding: '0.9rem 0.6rem', textAlign: 'center' }}>
+                        {u.imagenPerfil ? (
+                          <img src={`data:image/jpeg;base64,${u.imagenPerfil}`} alt="Perfil" style={{ width: '42px', height: '42px', borderRadius: '50%', objectFit: 'cover', border: `2px solid ${palette.border}` }} />
+                        ) : (
+                          <div style={{ width: '42px', height: '42px', borderRadius: '50%', backgroundColor: palette.sand, display: 'flex', alignItems: 'center', justifyContent: 'center', margin: '0 auto' }}>
+                            <span style={{ fontSize: '0.72rem', color: palette.slate, fontWeight: '700' }}>N/A</span>
+                          </div>
+                        )}
+                      </td>
+                      <td style={{ padding: '0.9rem 0.8rem', color: palette.ink, fontWeight: '600', wordBreak: 'break-word' }}>
+                        {`${u.nombreUsuario || ''} ${u.apellidoUsuario || ''}`.trim() || '—'}
+                      </td>
+                      <td style={{ padding: '0.9rem 0.8rem', color: palette.slate, wordBreak: 'break-all' }}>{u.correo}</td>
+                      <td style={{ padding: '0.9rem 0.6rem' }}>
+                        <span style={{
+                          display: 'inline-block',
+                          padding: '0.38rem 0.72rem',
+                          borderRadius: '999px',
+                          color: isActive ? palette.success : palette.danger,
+                          backgroundColor: isActive ? '#eafaf3' : '#ffe7eb',
+                          fontWeight: '800',
+                          fontSize: '0.76rem',
+                          letterSpacing: '0.04em',
+                        }}>
+                          {u.estado || 'Activo'}
+                        </span>
+                      </td>
+                      <td style={{ padding: '0.9rem 0.6rem', textAlign: 'center' }}>
+                        <div style={{ display: 'flex', gap: '0.35rem', justifyContent: 'center', alignItems: 'center', flexWrap: 'nowrap' }}>
+                          <button onClick={() => handleEdit(u)} style={{
+                            backgroundColor: palette.info,
+                            color: palette.fucsiaDark,
+                            border: 'none',
+                            padding: '0.4rem 0.65rem',
+                            borderRadius: '8px',
+                            fontWeight: '700',
+                            cursor: 'pointer',
+                            fontSize: '0.8rem'
+                          }}>
+                            Editar
+                          </button>
+                          <button onClick={() => handleCambiarEstado(u)} style={{
+                            backgroundColor: isActive ? '#ffe7eb' : '#e8f9ef',
+                            color: isActive ? palette.danger : palette.success,
+                            border: 'none',
+                            padding: '0.4rem 0.65rem',
+                            borderRadius: '8px',
+                            fontWeight: '700',
+                            cursor: 'pointer',
+                            fontSize: '0.8rem',
+                            minWidth: '70px',
+                          }}>
+                            {isActive ? 'Inactivar' : 'Activar'}
+                          </button>
                         </div>
-                      )}
-                    </td>
-                    <td style={{ padding: '0.9rem 0.8rem', color: palette.ink, fontWeight: '600' }}>
-                      {`${u.primerNom || ''} ${u.segundNom || ''} ${u.primerApelli || ''} ${u.segundApelli || ''}`.trim() || '—'}
-                    </td>
-                    <td style={{ padding: '0.9rem 0.8rem', color: palette.slate }}>{u.correo}</td>
-                    <td style={{ padding: '0.9rem 0.8rem' }}>
-                      <span style={{
-                        display: 'inline-block',
-                        padding: '0.38rem 0.72rem',
-                        borderRadius: '999px',
-                        color: u.estado === 1 ? palette.success : palette.danger,
-                        backgroundColor: u.estado === 1 ? '#eafaf3' : '#ffe7eb',
-                        fontWeight: '800',
-                        fontSize: '0.76rem',
-                        letterSpacing: '0.04em',
-                      }}>
-                        {u.estado === 1 ? 'ACTIVO' : 'INACTIVO'}
-                      </span>
-                    </td>
-                    <td style={{ padding: '0.9rem 0.8rem', textAlign: 'center' }}>
-                      <div style={{ display: 'flex', gap: '0.5rem', justifyContent: 'center', alignItems: 'center', flexWrap: 'wrap' }}>
-                        <button onClick={() => handleEdit(u)} style={{
-                          backgroundColor: palette.info,
-                          color: palette.fucsiaDark,
-                          border: 'none',
-                          padding: '0.45rem 0.9rem',
-                          borderRadius: '10px',
-                          fontWeight: '700',
-                          cursor: 'pointer',
-                        }}>
-                          Editar
-                        </button>
-                        <button onClick={() => handleCambiarEstado(u)} style={{
-                          backgroundColor: u.estado === 1 ? '#ffe7eb' : '#e8f9ef',
-                          color: u.estado === 1 ? palette.danger : palette.success,
-                          border: 'none',
-                          padding: '0.45rem 0.9rem',
-                          borderRadius: '10px',
-                          fontWeight: '700',
-                          cursor: 'pointer',
-                          minWidth: '85px',
-                        }}>
-                          {u.estado === 1 ? 'Inactivar' : 'Activar'}
-                        </button>
-                      </div>
-                    </td>
-                  </tr>
-                ))
+                      </td>
+                    </tr>
+                  );
+                })
               ) : (
                 <tr>
                   <td colSpan="6" style={{ padding: '1.5rem', textAlign: 'center', color: palette.slate, fontWeight: '600' }}>

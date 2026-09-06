@@ -65,9 +65,9 @@ public class MovimientoInventario {
     @Column(name = "fk_id_stock", nullable = false)
     private Long fkIdStock;
 
-    @JsonProperty("fk_id_usuario_admin")
-    @Column(name = "fk_id_usuario_admin")
-    private Integer fkIdUsuarioAdmin;
+    @JsonProperty("fk_id_usuario")
+    @Column(name = "fk_id_usuario")
+    private Integer fkIdUsuario;
 
     @PrePersist
     public void prePersist() {
@@ -95,6 +95,6 @@ public class MovimientoInventario {
     public Long getFkIdStock() { return fkIdStock; }
     public void setFkIdStock(Long fkIdStock) { this.fkIdStock = fkIdStock; }
 
-    public Integer getFkIdUsuarioAdmin() { return fkIdUsuarioAdmin; }
-    public void setFkIdUsuarioAdmin(Integer fkIdUsuarioAdmin) { this.fkIdUsuarioAdmin = fkIdUsuarioAdmin; }
+    public Integer getFkIdUsuario() { return fkIdUsuario; }
+    public void setFkIdUsuario(Integer fkIdUsuario) { this.fkIdUsuario = fkIdUsuario; }
 }

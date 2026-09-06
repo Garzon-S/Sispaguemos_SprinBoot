@@ -126,9 +126,8 @@ function VentasEmpleado() {
     try {
       const totalVenta = calcularTotal();
       const payload = {
-        precio_final: totalVenta,
+        total_venta: totalVenta,
         metodo_pago: metodoPago,
-        fk_id_usuario_cajero: Number(idCajero),
         cliente_correo: emailCliente.trim() || null,
         detalles: carrito.map(item => ({
           id_prenda: item.id,

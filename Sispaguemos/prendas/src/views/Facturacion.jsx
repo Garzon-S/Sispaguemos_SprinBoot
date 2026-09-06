@@ -110,8 +110,8 @@ export default function Facturacion() {
     if (!idUsuario) throw new Error('No se encontró el usuario de la compra.');
 
     const response = await axios.post('http://localhost:8080/api/pedidos', {
-      total_estimado: total,
-      fk_id_usuario_cliente: idUsuario,
+      total_pedido: total,
+      fk_id_usuario: idUsuario,
       detalles: carrito.map((item) => ({
         fk_id_prenda: item.id,
         cantidad: Number(item.cantidad || 0),

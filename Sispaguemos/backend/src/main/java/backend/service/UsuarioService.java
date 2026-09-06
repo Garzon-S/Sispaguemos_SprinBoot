@@ -2,10 +2,8 @@ package backend.service;
 
 import backend.model.Rol;
 import backend.model.Usuario;
-import backend.model.UsuarioRol;
 import backend.repository.RolRepository;
 import backend.repository.UsuarioRepository;
-import backend.repository.UsuarioRolRepository;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.stereotype.Service;
 
@@ -21,8 +19,7 @@ public class UsuarioService {
     @Autowired
     private RolRepository rolRepository;
 
-    @Autowired
-    private UsuarioRolRepository usuarioRolRepository;
+    private static final Integer ID_ROL_CLIENTE_DEFAULT = 3; // ajustar si tu ID de "Cliente" es distinto
 
     public List<Usuario> obtenerTodos() {
         return usuarioRepository.findAll();
@@ -48,27 +45,27 @@ public class UsuarioService {
             usuario.setCorreo(usuario.getCorreo().trim().toLowerCase());
         }
 
-        Usuario usuarioGuardado = usuarioRepository.save(usuario);
-
-        Rol rolCliente = rolRepository.findByNomRol("Cliente")
-                .orElseGet(() -> rolRepository.findById(3).orElse(null));
-
-        if (rolCliente != null) {
-            UsuarioRol usuarioRol = new UsuarioRol(usuarioGuardado.getId(), rolCliente.getIdRol());
-            usuarioRolRepository.save(usuarioRol);
+        // Si no viene un rol asignado desde el frontend, asigna "Cliente" por defecto
+        if (usuario.getFkIdRol() == null) {
+            Rol rolCliente = rolRepository.findByNomRol("Cliente")
+                    .orElseGet(() -> rolRepository.findById(ID_ROL_CLIENTE_DEFAULT).orElse(null));
+            if (rolCliente != null) {
+                usuario.setFkIdRol(rolCliente.getIdRol());
+            }
         }
 
-        return usuarioGuardado;
+        return usuarioRepository.save(usuario);
     }
 
     public Usuario actualizarUsuario(Integer id, Usuario datosUsuario) {
         return usuarioRepository.findById(id).map(usuario -> {
-            usuario.setPrimerNom(datosUsuario.getPrimerNom());
-            usuario.setSegundNom(datosUsuario.getSegundNom());
-            usuario.setPrimerApelli(datosUsuario.getPrimerApelli());
-            usuario.setSegundApelli(datosUsuario.getSegundApelli());
+            usuario.setNombreUsuario(datosUsuario.getNombreUsuario());
+            usuario.setApellidoUsuario(datosUsuario.getApellidoUsuario());
             usuario.setCorreo(datosUsuario.getCorreo());
+            usuario.setTelefono(datosUsuario.getTelefono());
+            usuario.setDireccion(datosUsuario.getDireccion());
             usuario.setEstado(datosUsuario.getEstado());
+
             if (datosUsuario.getContrasena() != null && !datosUsuario.getContrasena().isBlank()) {
                 usuario.setContrasena(datosUsuario.getContrasena());
             }
@@ -81,8 +78,8 @@ public class UsuarioService {
             return "Cliente";
         }
 
-        return usuarioRolRepository.findByFkIdUsuario(idUsuario)
-                .map(UsuarioRol::getFkIdRol)
+        return usuarioRepository.findById(idUsuario)
+                .map(Usuario::getFkIdRol)
                 .flatMap(rolRepository::findById)
                 .map(Rol::getNomRol)
                 .orElse("Cliente");
@@ -90,11 +87,13 @@ public class UsuarioService {
 
     public void asignarRolCliente(Integer idUsuario) {
         Rol rolCliente = rolRepository.findByNomRol("Cliente")
-                .orElseGet(() -> rolRepository.findById(3).orElse(null));
+                .orElseGet(() -> rolRepository.findById(ID_ROL_CLIENTE_DEFAULT).orElse(null));
 
         if (rolCliente != null) {
-            UsuarioRol usuarioRol = new UsuarioRol(idUsuario, rolCliente.getIdRol());
-            usuarioRolRepository.save(usuarioRol);
+            usuarioRepository.findById(idUsuario).ifPresent(usuario -> {
+                usuario.setFkIdRol(rolCliente.getIdRol());
+                usuarioRepository.save(usuario);
+            });
         }
     }
 

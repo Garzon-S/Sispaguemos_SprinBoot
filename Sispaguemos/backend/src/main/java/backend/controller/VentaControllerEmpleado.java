@@ -24,20 +24,21 @@ public class VentaControllerEmpleado {
     @PostMapping
     public ResponseEntity<?> registrarVenta(@RequestBody Map<String, Object> payload) {
         try {
-            Double precioFinal = Double.valueOf(payload.get("precio_final").toString());
+            Double totalVenta = Double.valueOf(payload.get("total_venta").toString());
             String metodoPago = (String) payload.get("metodo_pago");
             
-            Object rawCajero = payload.get("fk_id_usuario_cajero");
-            Integer idCajero = rawCajero != null ? Integer.valueOf(rawCajero.toString()) : 1;
+            // Si el frontend envía un id de pedido, lo usamos; si no, asignamos un valor por defecto o manejador
+            Integer fkIdPedido = payload.get("fk_id_pedido") != null 
+                ? Integer.valueOf(payload.get("fk_id_pedido").toString()) 
+                : 1; // Asegúrate de que exista un pedido con ID 1 en tu BD o ajusta esta lógica según tus tablas
 
-            System.out.println("Registrando venta POS - Cajero ID: " + idCajero + " | Total: " + precioFinal);
+            System.out.println("Registrando venta POS - Total: " + totalVenta + " - Pedido ID: " + fkIdPedido);
 
             VentaPedido venta = new VentaPedido();
             venta.setFechaVenta(LocalDateTime.now());
-            venta.setPrecioFinal(precioFinal);
+            venta.setTotalVenta(totalVenta);
             venta.setMetodoPago(metodoPago);
-            venta.setFkIdUsuarioCajero(idCajero);
-            venta.setFkIdPedido(null); 
+            venta.setFkIdPedido(fkIdPedido); // Ya no va en null
 
             VentaPedido nuevaVenta = ventaRepositoryEmpleado.save(venta);
             return ResponseEntity.ok(nuevaVenta);

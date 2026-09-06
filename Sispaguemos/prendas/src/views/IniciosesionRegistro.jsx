@@ -159,7 +159,8 @@ export default function AuthPage() {
       localStorage.setItem('usuarioActual', JSON.stringify(usuario));
       setStatus('success');
 
-      const destino = rol === 'administrador' || rol === 'empleado' ? '/dashboard' : '/';
+      // Incluimos 'vendedor' y 'empleado' para que redirija correctamente al dashboard
+      const destino = (rol === 'administrador' || rol === 'vendedor' || rol === 'empleado') ? '/dashboard' : '/';
       setTimeout(() => navigate(destino), 900);
     } catch (error) {
       setLoginErrors({
@@ -203,7 +204,8 @@ export default function AuthPage() {
       localStorage.setItem('usuarioActual', JSON.stringify(usuario));
       setStatus('success');
 
-      const destino = rol === 'administrador' || rol === 'empleado' ? '/dashboard' : '/';
+      // Incluimos 'vendedor' y 'empleado' aquí también
+      const destino = (rol === 'administrador' || rol === 'vendedor' || rol === 'empleado') ? '/dashboard' : '/';
       setTimeout(() => navigate(destino), 900);
     } catch (error) {
       setRegErrors({ email: error.message || 'No se pudo crear la cuenta.' });

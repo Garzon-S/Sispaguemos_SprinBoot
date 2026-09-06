@@ -24,15 +24,29 @@ public class UsuarioController {
     private Map<String, Object> crearRespuestaUsuario(Usuario usuario) {
         Map<String, Object> respuesta = new HashMap<>();
         respuesta.put("id", usuario.getId());
-        respuesta.put("primerNom", usuario.getPrimerNom());
-        respuesta.put("segundNom", usuario.getSegundNom());
-        respuesta.put("primerApelli", usuario.getPrimerApelli());
-        respuesta.put("segundApelli", usuario.getSegundApelli());
+        respuesta.put("nombreUsuario", usuario.getNombreUsuario());
+        respuesta.put("apellidoUsuario", usuario.getApellidoUsuario());
         respuesta.put("correo", usuario.getCorreo());
+        respuesta.put("telefono", usuario.getTelefono());
+        respuesta.put("direccion", usuario.getDireccion());
         respuesta.put("estado", usuario.getEstado());
-        respuesta.put("fechaIngreso", usuario.getFechaIngreso());
+        respuesta.put("fechaRegistro", usuario.getFechaRegistro());
         respuesta.put("imagenPerfil", usuario.getImagenPerfil());
-        respuesta.put("rol", usuarioService.obtenerRolPorUsuarioId(usuario.getId()));
+        respuesta.put("fkIdRol", usuario.getFkIdRol());
+        
+        // Asignación directa del rol según el ID almacenado en la base de datos
+        String nombreRol = "Cliente";
+        if (usuario.getFkIdRol() != null) {
+            if (usuario.getFkIdRol() == 1) {
+                nombreRol = "Administrador";
+            } else if (usuario.getFkIdRol() == 2) {
+                nombreRol = "Vendedor";
+            } else if (usuario.getFkIdRol() == 3) {
+                nombreRol = "Cliente";
+            }
+        }
+        respuesta.put("rol", nombreRol);
+        
         respuesta.put("contrasena", null);
         return respuesta;
     }
@@ -53,32 +67,36 @@ public class UsuarioController {
 
     @PostMapping("/login")
     public ResponseEntity<?> iniciarSesion(@RequestBody Map<String, String> payload) {
-        String correo = payload.get("correo");
-        String contrasena = payload.get("contrasena");
+        try {
+            String correo = payload.get("correo") != null ? payload.get("correo") : payload.get("correo_usuario");
+            String contrasena = payload.get("contrasena");
 
-        if (correo == null || contrasena == null || correo.isBlank() || contrasena.isBlank()) {
-            return ResponseEntity.badRequest().body("Correo y contraseña son obligatorios");
+            if (correo == null || contrasena == null || correo.isBlank() || contrasena.isBlank()) {
+                return ResponseEntity.badRequest().body(Map.of("error", "Correo y contraseña son obligatorios"));
+            }
+
+            Optional<Usuario> usuario = usuarioService.autenticar(correo.trim(), contrasena);
+            if (usuario.isEmpty()) {
+                return ResponseEntity.status(401).body(Map.of("error", "Credenciales inválidas o correo no registrado"));
+            }
+
+            Usuario usuarioLogueado = usuario.get();
+            return ResponseEntity.ok(crearRespuestaUsuario(usuarioLogueado));
+
+        } catch (Exception e) {
+            e.printStackTrace();
+            return ResponseEntity.status(500).body(Map.of("error", "Error interno en el servidor: " + e.getMessage()));
         }
-
-        Optional<Usuario> usuario = usuarioService.autenticar(correo, contrasena);
-        if (usuario.isEmpty()) {
-            return ResponseEntity.status(401).body("Credenciales inválidas");
-        }
-
-        Usuario usuarioLogueado = usuario.get();
-        return ResponseEntity.ok(crearRespuestaUsuario(usuarioLogueado));
     }
 
     @PostMapping(value = "/register", consumes = "application/json")
     public ResponseEntity<?> registrarUsuario(@RequestBody Map<String, String> payload) {
-        String primerNom = payload.get("primerNom");
-        String segundNom = payload.get("segundNom");
-        String primerApelli = payload.get("primerApelli");
-        String segundApelli = payload.get("segundApelli");
+        String nombreUsuario = payload.get("nombreUsuario");
+        String apellidoUsuario = payload.get("apellidoUsuario");
         String correo = payload.get("correo");
         String contrasena = payload.get("contrasena");
 
-        if (primerNom == null || primerApelli == null || correo == null || contrasena == null) {
+        if (nombreUsuario == null || apellidoUsuario == null || correo == null || contrasena == null) {
             return ResponseEntity.badRequest().body("Faltan datos para registrar el usuario");
         }
 
@@ -87,13 +105,12 @@ public class UsuarioController {
         }
 
         Usuario usuario = new Usuario();
-        usuario.setPrimerNom(primerNom.trim());
-        usuario.setSegundNom(segundNom != null ? segundNom.trim() : null);
-        usuario.setPrimerApelli(primerApelli.trim());
-        usuario.setSegundApelli(segundApelli != null ? segundApelli.trim() : null);
+        usuario.setNombreUsuario(nombreUsuario.trim());
+        usuario.setApellidoUsuario(apellidoUsuario.trim());
         usuario.setCorreo(correo.trim().toLowerCase());
         usuario.setContrasena(contrasena);
-        usuario.setEstado(Integer.parseInt(payload.getOrDefault("estado", "1")));
+        usuario.setEstado(payload.getOrDefault("estado", "Activo"));
+        usuario.setFkIdRol(Integer.parseInt(payload.getOrDefault("fkIdRol", "3")));
 
         Usuario usuarioGuardado = usuarioService.guardarUsuario(usuario);
         return ResponseEntity.ok(crearRespuestaUsuario(usuarioGuardado));
@@ -101,16 +118,15 @@ public class UsuarioController {
 
     @PostMapping(value = "/register", consumes = "multipart/form-data")
     public ResponseEntity<?> registrarUsuarioMultipart(
-            @RequestParam("primerNom") String primerNom,
-            @RequestParam(value = "segundNom", required = false) String segundNom,
-            @RequestParam("primerApelli") String primerApelli,
-            @RequestParam(value = "segundApelli", required = false) String segundApelli,
+            @RequestParam("nombreUsuario") String nombreUsuario,
+            @RequestParam("apellidoUsuario") String apellidoUsuario,
             @RequestParam("correo") String correo,
             @RequestParam(value = "contrasena", required = false) String contrasena,
-            @RequestParam(value = "estado", defaultValue = "1") String estadoStr,
+            @RequestParam(value = "estado", defaultValue = "Activo") String estado,
+            @RequestParam(value = "fkIdRol", defaultValue = "3") String fkIdRolStr,
             @RequestParam(value = "imagenPerfil", required = false) MultipartFile imagenPerfil) {
         try {
-            if (primerNom == null || primerApelli == null || correo == null || contrasena == null) {
+            if (nombreUsuario == null || apellidoUsuario == null || correo == null || contrasena == null) {
                 return ResponseEntity.badRequest().body("Faltan datos para registrar el usuario");
             }
 
@@ -119,13 +135,12 @@ public class UsuarioController {
             }
 
             Usuario usuario = new Usuario();
-            usuario.setPrimerNom(primerNom.trim());
-            usuario.setSegundNom(segundNom != null ? segundNom.trim() : null);
-            usuario.setPrimerApelli(primerApelli.trim());
-            usuario.setSegundApelli(segundApelli != null ? segundApelli.trim() : null);
+            usuario.setNombreUsuario(nombreUsuario.trim());
+            usuario.setApellidoUsuario(apellidoUsuario.trim());
             usuario.setCorreo(correo.trim().toLowerCase());
             usuario.setContrasena(contrasena);
-            usuario.setEstado(Integer.parseInt(estadoStr));
+            usuario.setEstado(estado);
+            usuario.setFkIdRol(Integer.parseInt(fkIdRolStr));
 
             if (imagenPerfil != null && !imagenPerfil.isEmpty()) {
                 usuario.setImagenPerfil(imagenPerfil.getBytes());
@@ -140,13 +155,12 @@ public class UsuarioController {
 
     @PostMapping
     public ResponseEntity<?> crearUsuario(
-            @RequestParam("primerNom") String primerNom,
-            @RequestParam(value = "segundNom", required = false) String segundNom,
-            @RequestParam("primerApelli") String primerApelli,
-            @RequestParam(value = "segundApelli", required = false) String segundApelli,
+            @RequestParam("nombreUsuario") String nombreUsuario,
+            @RequestParam("apellidoUsuario") String apellidoUsuario,
             @RequestParam("correo") String correo,
             @RequestParam("contrasena") String contrasena,
-            @RequestParam("estado") String estadoStr,
+            @RequestParam("estado") String estado,
+            @RequestParam(value = "fkIdRol", defaultValue = "3") String fkIdRolStr,
             @RequestParam(value = "imagenPerfil", required = false) MultipartFile imagenPerfil) {
         try {
             if (contrasena == null || contrasena.isBlank()) {
@@ -154,13 +168,12 @@ public class UsuarioController {
             }
 
             Usuario usuario = new Usuario();
-            usuario.setPrimerNom(primerNom);
-            usuario.setSegundNom(segundNom);
-            usuario.setPrimerApelli(primerApelli);
-            usuario.setSegundApelli(segundApelli);
+            usuario.setNombreUsuario(nombreUsuario);
+            usuario.setApellidoUsuario(apellidoUsuario);
             usuario.setCorreo(correo);
             usuario.setContrasena(contrasena);
-            usuario.setEstado(Integer.parseInt(estadoStr));
+            usuario.setEstado(estado);
+            usuario.setFkIdRol(Integer.parseInt(fkIdRolStr));
 
             if (imagenPerfil != null && !imagenPerfil.isEmpty()) {
                 if (imagenPerfil.getSize() > 500 * 1024) {
@@ -173,8 +186,6 @@ public class UsuarioController {
             return ResponseEntity.ok(crearRespuestaUsuario(usuarioGuardado));
         } catch (IOException e) {
             return ResponseEntity.badRequest().body("Error al procesar la imagen: " + e.getMessage());
-        } catch (NumberFormatException e) {
-            return ResponseEntity.badRequest().body("El estado debe ser un número");
         } catch (Exception e) {
             return ResponseEntity.badRequest().body("Error al guardar el usuario: " + e.getMessage());
         }
@@ -183,27 +194,23 @@ public class UsuarioController {
     @PutMapping("/{id}")
     public ResponseEntity<?> actualizarUsuario(
             @PathVariable Integer id,
-            @RequestParam("primerNom") String primerNom,
-            @RequestParam(value = "segundNom", required = false) String segundNom,
-            @RequestParam("primerApelli") String primerApelli,
-            @RequestParam(value = "segundApelli", required = false) String segundApelli,
+            @RequestParam("nombreUsuario") String nombreUsuario,
+            @RequestParam("apellidoUsuario") String apellidoUsuario,
             @RequestParam("correo") String correo,
             @RequestParam(value = "contrasena", required = false) String contrasena,
-            @RequestParam("estado") String estadoStr,
+            @RequestParam("estado") String estado,
             @RequestParam(value = "imagenPerfil", required = false) MultipartFile imagenPerfil) {
         try {
             Usuario usuarioExistente = usuarioService.obtenerPorId(id)
                     .orElseThrow(() -> new RuntimeException("Usuario no encontrado"));
 
-            usuarioExistente.setPrimerNom(primerNom);
-            usuarioExistente.setSegundNom(segundNom);
-            usuarioExistente.setPrimerApelli(primerApelli);
-            usuarioExistente.setSegundApelli(segundApelli);
+            usuarioExistente.setNombreUsuario(nombreUsuario);
+            usuarioExistente.setApellidoUsuario(apellidoUsuario);
             usuarioExistente.setCorreo(correo);
             if (contrasena != null && !contrasena.isBlank()) {
                 usuarioExistente.setContrasena(contrasena);
             }
-            usuarioExistente.setEstado(Integer.parseInt(estadoStr));
+            usuarioExistente.setEstado(estado);
 
             if (imagenPerfil != null && !imagenPerfil.isEmpty()) {
                 if (imagenPerfil.getSize() > 500 * 1024) {
@@ -216,8 +223,6 @@ public class UsuarioController {
             return ResponseEntity.ok(crearRespuestaUsuario(actualizado));
         } catch (IOException e) {
             return ResponseEntity.badRequest().body("Error al procesar la imagen: " + e.getMessage());
-        } catch (NumberFormatException e) {
-            return ResponseEntity.badRequest().body("El estado debe ser un número");
         } catch (Exception e) {
             return ResponseEntity.badRequest().body("Error al actualizar el usuario: " + e.getMessage());
         }

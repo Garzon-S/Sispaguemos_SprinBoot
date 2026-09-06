@@ -37,9 +37,9 @@ public class PedidoController {
     public ResponseEntity<?> crearPedido(@RequestBody Map<String, Object> payload) {
         try {
             Pedido pedido = new Pedido();
-            pedido.setTotalEstimado(Double.valueOf(payload.get("total_estimado").toString()));
-            pedido.setFkIdUsuarioCliente(Integer.valueOf(payload.get("fk_id_usuario_cliente").toString()));
-            pedido.setEstado("Pendiente");
+            pedido.setTotalPedido(Double.valueOf(payload.get("total_pedido").toString()));
+            pedido.setFkIdUsuario(Integer.valueOf(payload.get("fk_id_usuario").toString()));
+            pedido.setEstadoPedido("Pendiente");
             Pedido pedidoGuardado = pedidoRepository.save(pedido);
 
             Object detallesPayload = payload.get("detalles");
@@ -63,7 +63,7 @@ public class PedidoController {
 
     @GetMapping("/usuario/{idUsuario}")
     public List<Map<String, Object>> listarPorUsuario(@PathVariable Integer idUsuario) {
-        return pedidoRepository.findByFkIdUsuarioClienteOrderByFechaPedidoDesc(idUsuario).stream().map(this::crearRespuestaPedido).toList();
+        return pedidoRepository.findByFkIdUsuarioOrderByFechaPedidoDesc(idUsuario).stream().map(this::crearRespuestaPedido).toList();
     }
 
     @GetMapping
@@ -75,16 +75,19 @@ public class PedidoController {
         Map<String, Object> respuesta = new HashMap<>();
         respuesta.put("idPedido", pedido.getIdPedido());
         respuesta.put("fechaPedido", pedido.getFechaPedido());
-        respuesta.put("totalEstimado", pedido.getTotalEstimado());
-        respuesta.put("estado", pedido.getEstado());
-        respuesta.put("fkIdUsuarioCliente", pedido.getFkIdUsuarioCliente());
-        respuesta.put("correoCliente", usuarioRepository.findById(pedido.getFkIdUsuarioCliente()).map(usuario -> usuario.getCorreo()).orElse("No registrado"));
+        respuesta.put("totalEstimado", pedido.getTotalPedido());
+        respuesta.put("estado", pedido.getEstadoPedido());
+        respuesta.put("fkIdUsuarioCliente", pedido.getFkIdUsuario());
+        respuesta.put("correoCliente", usuarioRepository.findById(pedido.getFkIdUsuario()).map(usuario -> usuario.getCorreo()).orElse("No registrado"));
 
-        List<Map<String, Object>> detalles = detallePedidoRepository.findByFkIdPedido(pedido.getIdPedido()).stream().map(detalle -> {
+List<Map<String, Object>> detalles = detallePedidoRepository.findByFkIdPedido(pedido.getIdPedido()).stream().map(detalle -> {
             Map<String, Object> item = new HashMap<>();
             item.put("idDetalle", detalle.getIdDetalle());
             item.put("fkIdPrenda", detalle.getFkIdPrenda());
-            item.put("nombrePrenda", prendaRepository.findById(detalle.getFkIdPrenda()).map(prenda -> prenda.getNombrePrend()).orElse("Prenda no encontrada"));
+            
+            // Convertimos detalle.getFkIdPrenda() a Integer con Integer.valueOf(...)
+            item.put("nombrePrenda", prendaRepository.findById(Integer.valueOf(detalle.getFkIdPrenda())).map(prenda -> prenda.getNombrePrend()).orElse("Prenda no encontrada"));
+            
             item.put("cantidad", detalle.getCantidad());
             item.put("precioUnitario", detalle.getPrecioUnitario());
             item.put("subtotal", detalle.getSubtotal());
@@ -99,12 +102,12 @@ public class PedidoController {
     public ResponseEntity<?> actualizarEstado(@PathVariable Long idPedido, @RequestBody Map<String, String> payload) {
         return pedidoRepository.findById(idPedido)
                 .map(pedido -> {
-                    String estado = payload.get("estado");
-                    if (estado == null || estado.isBlank()) return ResponseEntity.badRequest().body("El estado es obligatorio");
-                    if (!ESTADOS_PERMITIDOS.contains(estado.trim())) {
+                    String estadoPedido = payload.get("estado_pedido");
+                    if (estadoPedido == null || estadoPedido.isBlank()) return ResponseEntity.badRequest().body("El estado es obligatorio");
+                    if (!ESTADOS_PERMITIDOS.contains(estadoPedido.trim())) {
                         return ResponseEntity.badRequest().body("Estado no válido");
                     }
-                    pedido.setEstado(estado.trim());
+                    pedido.setEstadoPedido(estadoPedido.trim());
                     return ResponseEntity.ok(pedidoRepository.save(pedido));
                 })
                 .orElseGet(() -> ResponseEntity.notFound().build());

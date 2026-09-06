@@ -21,8 +21,8 @@ public class VentaPedido {
     @Column(name = "fecha_venta", nullable = false)
     private LocalDateTime fechaVenta = LocalDateTime.now();
 
-    @Column(name = "precio_final", nullable = false)
-    private Double precioFinal;
+    @Column(name = "total_venta", nullable = false)
+    private Double totalVenta;
 
     @Column(name = "metodo_pago")
     private String metodoPago;
@@ -30,8 +30,6 @@ public class VentaPedido {
     @Column(name = "fk_id_pedido")
     private Integer fkIdPedido;
 
-    @Column(name = "fk_id_usuario_cajero", nullable = false)
-    private Integer fkIdUsuarioCajero;
 
     // Constructor vacío obligatorio para JPA / Hibernate
     public VentaPedido() {
@@ -44,8 +42,8 @@ public class VentaPedido {
     public LocalDateTime getFechaVenta() { return fechaVenta; }
     public void setFechaVenta(LocalDateTime fechaVenta) { this.fechaVenta = fechaVenta; }
 
-    public Double getPrecioFinal() { return precioFinal; }
-    public void setPrecioFinal(Double precioFinal) { this.precioFinal = precioFinal; }
+    public Double getTotalVenta() { return totalVenta; }
+    public void setTotalVenta(Double totalVenta) { this.totalVenta = totalVenta; }
 
     public String getMetodoPago() { return metodoPago; }
     public void setMetodoPago(String metodoPago) { this.metodoPago = metodoPago; }
@@ -53,6 +51,4 @@ public class VentaPedido {
     public Integer getFkIdPedido() { return fkIdPedido; }
     public void setFkIdPedido(Integer fkIdPedido) { this.fkIdPedido = fkIdPedido; }
 
-    public Integer getFkIdUsuarioCajero() { return fkIdUsuarioCajero; }
-    public void setFkIdUsuarioCajero(Integer fkIdUsuarioCajero) { this.fkIdUsuarioCajero = fkIdUsuarioCajero; }
 }

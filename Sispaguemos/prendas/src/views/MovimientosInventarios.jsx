@@ -3,6 +3,7 @@ import { useEffect, useState } from 'react';
 import axios from 'axios';
 import { obtenerBodega } from '../services/BodegaService';
 import { obtenerPrendas } from '../services/prendaService';
+import { obtenerUsuarios } from '../services/usuarioService';
 import '../styles/movimientos.css';
 
 function MovimientosInventario() {
@@ -25,7 +26,7 @@ function MovimientosInventario() {
     cantidad: '',
     observacion: 'Reestock',
     fk_id_stock: '',
-    fk_id_usuario_admin: idUsuarioLogueado
+    fk_id_usuario: idUsuarioLogueado
   });
 
   useEffect(() => {
@@ -40,10 +41,9 @@ function MovimientosInventario() {
       
       let dataUsuarios = [];
       try {
-        const resUser = await axios.get('http://localhost:8080/api/usuario');
-        dataUsuarios = resUser.data || [];
+        dataUsuarios = await obtenerUsuarios();
       } catch (e) {
-        console.warn("No se pudo cargar la lista de usuarios, usando respaldo local.");
+        console.warn('No se pudo cargar la lista de usuarios.', e);
       }
       
       setMovimientos(resMovs.data || []);
@@ -79,7 +79,7 @@ function MovimientosInventario() {
         cantidad: Number(formMovimiento.cantidad),
         observacion: formMovimiento.observacion,
         fk_id_stock: Number(formMovimiento.fk_id_stock),
-        fk_id_usuario_admin: Number(idUsuarioLogueado) // Se inyecta el ID del usuario actual activo
+        fk_id_usuario: Number(idUsuarioLogueado) // Se inyecta el ID del usuario actual activo
       };
 
       await axios.post('http://localhost:8080/api/movimientos', payload);
@@ -92,7 +92,7 @@ function MovimientosInventario() {
         cantidad: '',
         observacion: 'Reestock',
         fk_id_stock: '',
-        fk_id_usuario_admin: Number(idUsuarioLogueado)
+        fk_id_usuario: Number(idUsuarioLogueado)
       });
       cargarDatos();
     } catch (err) {
@@ -117,29 +117,25 @@ function MovimientosInventario() {
   };
 
   const obtenerNombreUsuario = (idAdmin) => {
-    // 1. Buscamos en la lista que trae la API general de usuarios
-    const usuarioInfo = usuarios.find(u => (u.idUsuario || u.id_usuario || u.id) == idAdmin);
+    // 1. Buscamos en la lista que trae la API (campos que devuelve UsuarioController)
+    const usuarioInfo = usuarios.find(u => (u.id) == idAdmin);
     if (usuarioInfo) {
-      const nombre = usuarioInfo.primerNom || usuarioInfo.primer_nom || '';
-      const apellido = usuarioInfo.primerApelli || usuarioInfo.primer_apelli || '';
+      const nombre = usuarioInfo.nombreUsuario || '';
+      const apellido = usuarioInfo.apellidoUsuario || '';
       const completo = `${nombre} ${apellido}`.trim();
       if (completo) return `${completo} (ID: ${idAdmin})`;
     }
 
-    // 2. Si coincide con el usuario actualmente logueado en el navegador, usamos sus datos directos
+    // 2. Si coincide con el usuario actualmente logueado en el navegador
     const actualId = usuarioActual.idUsuario || usuarioActual.id_usuario || usuarioActual.id;
     if (String(actualId) === String(idAdmin)) {
-      const nombre = usuarioActual.primerNom || usuarioActual.primer_nom || '';
-      const apellido = usuarioActual.primerApelli || usuarioActual.primer_apelli || '';
+      const nombre = usuarioActual.nombreUsuario || usuarioActual.primerNom || usuarioActual.primer_nom || '';
+      const apellido = usuarioActual.apellidoUsuario || usuarioActual.primerApelli || usuarioActual.primer_apelli || '';
       const completo = `${nombre} ${apellido}`.trim();
       if (completo) return `${completo} (ID: ${idAdmin})`;
     }
 
-    // 3. Respaldo por defecto para el ID 1 o genéricos
-    if (Number(idAdmin) === 1) {
-      return `Sergio Garzon (ID: 1)`;
-    }
-
+    // 3. Respaldo por defecto
     return `Usuario ID: ${idAdmin}`;
   };
 
@@ -176,7 +172,7 @@ function MovimientosInventario() {
                 const tipo = m.tipoMovimiento || m.tipo_movimiento;
                 const esEntrada = tipo === 'Entrada' || tipo === 'ENTRADA';
                 const idStockRef = m.fkIdStock || m.fk_id_stock;
-                const idAdminRef = m.fkIdUsuarioAdmin || m.fk_id_usuario_admin;
+                const idAdminRef = m.fkIdUsuarioAdmin || m.fk_id_usuario;
                 const prendaInfo = obtenerInfoPrenda(idStockRef);
                 const nombreResponsable = obtenerNombreUsuario(idAdminRef);
 

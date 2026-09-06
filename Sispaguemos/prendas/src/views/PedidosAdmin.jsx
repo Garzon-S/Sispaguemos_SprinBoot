@@ -60,7 +60,7 @@ export default function PedidosAdmin() {
   const cambiarEstado = async (idPedido, estado) => {
     setActualizando(idPedido);
     try {
-      const { data } = await axios.put(`http://localhost:8080/api/pedidos/${idPedido}/estado`, { estado });
+      const { data } = await axios.put(`http://localhost:8080/api/pedidos/${idPedido}/estado`, { estado_pedido: estado });
       setPedidos((anteriores) => anteriores.map((pedido) => pedido.idPedido === idPedido ? data : pedido));
     } catch (requestError) {
       console.error('Error actualizando pedido:', requestError);

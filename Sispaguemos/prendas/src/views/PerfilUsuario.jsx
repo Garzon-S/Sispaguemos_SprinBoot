@@ -16,10 +16,25 @@ const palette = {
 export default function PerfilUsuario() {
   const navigate = useNavigate();
 
-  const usuario = useMemo(() => {
+ const usuario = useMemo(() => {
     try {
       const raw = localStorage.getItem('usuarioActual');
-      return raw ? JSON.parse(raw) : null;
+      if (!raw) return null;
+      let parsed = JSON.parse(raw);
+
+      // Mapeo universal de roles según el fkIdRol o el correo
+      if (parsed.fkIdRol === 1 || parsed.correo === 'admin@sispaguemos.com') {
+        parsed.rol = 'Administrador';
+        parsed.fkIdRol = 1;
+      } else if (parsed.fkIdRol === 2 || parsed.correo?.includes('vendedor')) {
+        parsed.rol = 'Vendedor';
+        parsed.fkIdRol = 2;
+      } else if (parsed.fkIdRol === 3 || !parsed.rol) {
+        parsed.rol = 'Cliente';
+        parsed.fkIdRol = 3;
+      }
+      
+      return parsed;
     } catch {
       return null;
     }
@@ -64,7 +79,14 @@ export default function PerfilUsuario() {
   }
 
   const avatarSrc = usuario.imagenPerfil ? `data:image/jpeg;base64,${usuario.imagenPerfil}` : null;
-  const iniciales = `${(usuario.primerNom || '').trim().charAt(0)?.toUpperCase() || ''}${(usuario.primerApelli || '').trim().charAt(0)?.toUpperCase() || ''}` || 'U';
+  
+  const nombreCompleto = usuario.nombreUsuario || 'Usuario';
+  const apellidoCompleto = usuario.apellidoUsuario || '';
+  const iniciales = `${nombreCompleto.charAt(0)?.toUpperCase() || ''}${apellidoCompleto.charAt(0)?.toUpperCase() || ''}` || 'U';
+
+  // Verificación sólida de administrador
+  const esAdmin = usuario.rol === 'Administrador' || usuario.fkIdRol === 1 || usuario.correo === 'admin@sispaguemos.com';
+  const rolTexto = esAdmin ? 'Administrador' : (usuario.rol || 'Cliente');
 
   const cerrarSesion = () => {
     localStorage.removeItem('usuarioActual');
@@ -121,7 +143,7 @@ export default function PerfilUsuario() {
                 Perfil de usuario
               </div>
               <h1 style={{ margin: '0.15rem 0 0', color: '#fff', fontSize: '2rem' }}>
-                {usuario.primerNom || 'Usuario'} {usuario.primerApelli || ''}
+                {nombreCompleto} {apellidoCompleto}
               </h1>
             </div>
           </div>
@@ -129,17 +151,29 @@ export default function PerfilUsuario() {
 
         <div style={{ padding: '2rem' }}>
           <div style={{ display: 'grid', gridTemplateColumns: 'repeat(2, minmax(220px, 1fr))', gap: '1rem' }}>
-            <InfoCard label="Primer nombre" value={usuario.primerNom || '—'} />
-            <InfoCard label="Segundo nombre" value={usuario.segundNom || '—'} />
-            <InfoCard label="Primer apellido" value={usuario.primerApelli || '—'} />
-            <InfoCard label="Segundo apellido" value={usuario.segundApelli || '—'} />
-            <InfoCard label="Correo" value={usuario.correo || '—'} full />
-            <InfoCard label="Rol" value={usuario.rol || 'Cliente'} />
-            <InfoCard label="Estado" value={usuario.estado === 1 ? 'Activo' : 'Inactivo'} />
-            <InfoCard label="Fecha de ingreso" value={usuario.fechaIngreso ? new Date(usuario.fechaIngreso).toLocaleDateString() : '—'} />
+            <InfoCard label="Nombre(s)" value={nombreCompleto} />
+            <InfoCard label="Apellido(s)" value={apellidoCompleto || '—'} />
+            <InfoCard label="Teléfono" value={usuario.telefono || '—'} />
+            <InfoCard label="Dirección" value={usuario.direccion || '—'} />
+            <InfoCard label="Correo electrónico" value={usuario.correo || '—'} full />
+            <InfoCard label="Rol" value={rolTexto} />
+            <InfoCard label="Estado" value={usuario.estado || 'Activo'} />
+            <InfoCard label="Fecha de registro" value={usuario.fechaRegistro ? new Date(usuario.fechaRegistro).toLocaleDateString() : '—'} />
           </div>
 
           <div style={{ display: 'flex', gap: '1rem', justifyContent: 'flex-end', marginTop: '2rem', flexWrap: 'wrap' }}>
+            {esAdmin && (
+              <Link to="/dashboard" style={{
+                background: palette.plum,
+                color: '#fff',
+                borderRadius: '30px',
+                padding: '0.8rem 1.4rem',
+                textDecoration: 'none',
+                fontWeight: 700,
+              }}>
+                Ir al Dashboard Admin
+              </Link>
+            )}
             <Link to="/" style={{
               background: '#fff',
               color: palette.fucsia,
