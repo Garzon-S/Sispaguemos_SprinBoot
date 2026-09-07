@@ -44,16 +44,11 @@ function Layout() {
             </Link>
           )}
 
-          {/* Módulos de Proveedores y Facturas (Exclusivos Admin) */}
+          {/* Módulo integrado de proveedores y compras (Exclusivo Admin) */}
           {esAdmin && (
-            <>
-              <Link to="/proveedores" className={`nav-item ${isActive('/proveedores') ? 'active' : ''}`}>
-                Proveedores
-              </Link>
-              <Link to="/facturas-proveedor" className={`nav-item ${isActive('/facturas-proveedor') ? 'active' : ''}`}>
-                Facturas Proveedor
-              </Link>
-            </>
+            <Link to="/proveedores" className={`nav-item ${isActive('/proveedores') ? 'active' : ''}`}>
+              Proveedores
+            </Link>
           )}
 
           {/* MÓDULO DE VENTAS: Exclusivo para Empleados */}

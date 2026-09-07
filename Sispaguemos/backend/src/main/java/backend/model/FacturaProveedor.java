@@ -25,7 +25,7 @@ public class FacturaProveedor {
 
     @Enumerated(EnumType.STRING)
     @Column(name = "estado", nullable = false)
-    private EstadoFactura estado = EstadoFactura.Pendiente;
+    private EstadoFactura estado = EstadoFactura.Recibida;
 
     @Column(name = "subtotal", nullable = false)
     private BigDecimal subtotal = BigDecimal.ZERO;
@@ -51,7 +51,7 @@ public class FacturaProveedor {
     private List<DetalleFacturaProveedor> detalles;
 
     public enum EstadoFactura {
-        Pendiente, Enviada, Recibida, Cancelada
+        Recibida, Incompleta, Cancelada
     }
 
     // Getters y Setters

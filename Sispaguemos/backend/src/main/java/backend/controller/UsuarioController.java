@@ -27,8 +27,6 @@ public class UsuarioController {
         respuesta.put("nombreUsuario", usuario.getNombreUsuario());
         respuesta.put("apellidoUsuario", usuario.getApellidoUsuario());
         respuesta.put("correo", usuario.getCorreo());
-        respuesta.put("telefono", usuario.getTelefono());
-        respuesta.put("direccion", usuario.getDireccion());
         respuesta.put("estado", usuario.getEstado());
         respuesta.put("fechaRegistro", usuario.getFechaRegistro());
         respuesta.put("imagenPerfil", usuario.getImagenPerfil());

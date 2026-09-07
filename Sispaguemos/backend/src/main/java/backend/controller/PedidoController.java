@@ -19,7 +19,7 @@ import java.util.stream.Collectors;
 @CrossOrigin(origins = "*")
 public class PedidoController {
 
-    private static final List<String> ESTADOS_PERMITIDOS = List.of("Pendiente", "Listo en tienda", "Cancelado");
+    private static final List<String> ESTADOS_PERMITIDOS = List.of("Pendiente", "Listo para recoger en tienda", "Cancelado");
 
     private final PedidoRepository pedidoRepository;
     private final DetallePedidoRepository detallePedidoRepository;
@@ -51,7 +51,6 @@ public class PedidoController {
                     detallePedido.setFkIdPrenda(String.valueOf(detalle.get("fk_id_prenda")));
                     detallePedido.setCantidad(Integer.valueOf(detalle.get("cantidad").toString()));
                     detallePedido.setPrecioUnitario(Double.valueOf(detalle.get("precio_unitario").toString()));
-                    detallePedido.setSubtotal(Double.valueOf(detalle.get("subtotal").toString()));
                     detallePedidoRepository.save(detallePedido);
                 }
             }
@@ -108,7 +107,8 @@ List<Map<String, Object>> detalles = detallePedidoRepository.findByFkIdPedido(pe
                         return ResponseEntity.badRequest().body("Estado no válido");
                     }
                     pedido.setEstadoPedido(estadoPedido.trim());
-                    return ResponseEntity.ok(pedidoRepository.save(pedido));
+                    Pedido pedidoActualizado = pedidoRepository.save(pedido);
+                    return ResponseEntity.ok(crearRespuestaPedido(pedidoActualizado));
                 })
                 .orElseGet(() -> ResponseEntity.notFound().build());
     }

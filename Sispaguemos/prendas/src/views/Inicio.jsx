@@ -1,5 +1,6 @@
 import React, { useState, useRef, useEffect } from 'react';
 import { Link, useNavigate } from 'react-router-dom';
+import '../styles/Inicio.css';
 
 // ---------------------------------------------------------------------------
 // Paleta: se conserva el fucsia de marca y se combina con un verde salvia
@@ -229,167 +230,52 @@ export default function InicioPage() {
   const activeLookData = looks.find((l) => l.id === activeLook);
 
   return (
-    <div style={{
-      fontFamily: "'Inter', system-ui, -apple-system, sans-serif",
-      backgroundColor: palette.cream,
-      width: '100%',
-      minHeight: '100vh',
-      margin: 0,
-      padding: 0,
-      boxSizing: 'border-box',
-      overflowX: 'hidden',
-      color: palette.ink,
-    }}>
-      <style>{`
-        @import url('https://fonts.googleapis.com/css2?family=Fraunces:ital,wght@0,500;0,600;0,700;1,500&family=Inter:wght@400;500;600;700;800&display=swap');
-        * { font-family: inherit; }
-        h1, h2, h3, .display { font-family: 'Fraunces', Georgia, serif; }
-        input::placeholder { color: ${palette.slate}; opacity: 0.7; }
-
-        @keyframes fadeUp { from { opacity: 0; transform: translateY(18px); } to { opacity: 1; transform: translateY(0); } }
-        .hero-anim > * { opacity: 0; animation: fadeUp 0.7s ease forwards; }
-        .hero-anim > *:nth-child(1) { animation-delay: 0.05s; }
-        .hero-anim > *:nth-child(2) { animation-delay: 0.15s; }
-        .hero-anim > *:nth-child(3) { animation-delay: 0.25s; }
-        .hero-anim > *:nth-child(4) { animation-delay: 0.35s; }
-        .hero-anim > *:nth-child(5) { animation-delay: 0.45s; }
-
-        @keyframes float { 0%, 100% { transform: translateY(0); } 50% { transform: translateY(-10px); } }
-        .floating { animation: float 4.5s ease-in-out infinite; }
-        .floating-slow { animation: float 5.5s ease-in-out infinite; animation-delay: 0.6s; }
-
-        @keyframes marquee { from { transform: translateX(0); } to { transform: translateX(-50%); } }
-        .marquee-track { display: flex; width: max-content; animation: marquee 26s linear infinite; }
-
-        @keyframes panelIn { from { opacity: 0; transform: translateX(14px); } to { opacity: 1; transform: translateX(0); } }
-        .look-panel { animation: panelIn 0.45s ease; }
-
-        @media (prefers-reduced-motion: reduce) {
-          *, *::before, *::after { animation: none !important; transition: none !important; }
-        }
-      `}</style>
-
+    <div className="inicio-page">
       {/* 1. BARRA DE NAVEGACIÓN SUPERIOR */}
-      <header style={{
-        display: 'flex',
-        justifyContent: 'space-between',
-        alignItems: 'center',
-        padding: '1.4rem 5rem',
-        borderBottom: `1px solid ${palette.sand}`,
-        backgroundColor: '#ffffff',
-        width: '100%',
-        boxSizing: 'border-box',
-        position: 'sticky',
-        top: 0,
-        zIndex: 1000,
-        gap: '2rem',
-      }}>
-        <div className="display" style={{ fontSize: '1.4rem', fontWeight: '700', letterSpacing: '-0.3px', color: palette.ink, whiteSpace: 'nowrap' }}>
-          Pague <span style={{ color: palette.fucsia, fontStyle: 'italic' }}>Menos</span>
+      <header className="inicio-header">
+        <div className="inicio-brand">
+          Pague <span className="inicio-brand-accent">Menos</span>
         </div>
 
-        <nav style={{ display: 'flex', gap: '2rem', fontSize: '0.92rem', fontWeight: '600', color: palette.slate }}>
-          <a href="#mujer" style={{ color: 'inherit', textDecoration: 'none' }}>Mujer</a>
-          <a href="#hombre" style={{ color: 'inherit', textDecoration: 'none' }}>Hombre</a>
-          <a href="#unisex" style={{ color: 'inherit', textDecoration: 'none' }}>Unisex</a>
-          <a href="#historia" style={{ color: 'inherit', textDecoration: 'none' }}>Nuestra historia</a>
+        <nav className="inicio-nav">
+          <a href="#mujer">Mujer</a>
+          <a href="#hombre">Hombre</a>
+          <a href="#unisex">Unisex</a>
+          <a href="#historia">Nuestra historia</a>
           {String(usuarioActual?.rol || '').trim().toLowerCase().includes('cliente') && (
-            <Link to="/compras" style={{ color: 'inherit', textDecoration: 'none' }}>Compras</Link>
+            <Link to="/compras">Compras</Link>
           )}
         </nav>
 
-        <div style={{ display: 'flex', alignItems: 'center', gap: '1rem' }}>
+        <div className="inicio-user-wrap">
           {usuarioActual ? (
             <div style={{ position: 'relative' }}>
               <button
                 type="button"
                 onClick={() => setMenuAbierto((prev) => !prev)}
-                style={{
-                  width: '52px',
-                  height: '52px',
-                  borderRadius: '50%',
-                  border: `2px solid ${palette.fucsia}`,
-                  background: avatarSrc ? '#ffffff' : 'linear-gradient(135deg, #f8bfd7 0%, #e63982 100%)',
-                  color: '#ffffff',
-                  fontWeight: '800',
-                  fontSize: '1.1rem',
-                  cursor: 'pointer',
-                  display: 'flex',
-                  alignItems: 'center',
-                  justifyContent: 'center',
-                  boxShadow: '0 6px 18px rgba(230, 57, 130, 0.28)',
-                  padding: 0,
-                  overflow: 'hidden',
-                }}
+                className="inicio-user-button"
                 aria-label="Menú de usuario"
+                style={{ background: avatarSrc ? '#ffffff' : 'linear-gradient(135deg, #f8bfd7 0%, #e63982 100%)' }}
               >
                 {avatarSrc ? (
-                  <img
-                    src={avatarSrc}
-                    alt="Foto de perfil"
-                    style={{
-                      width: '100%',
-                      height: '100%',
-                      objectFit: 'cover',
-                      display: 'block',
-                    }}
-                  />
+                  <img src={avatarSrc} alt="Foto de perfil" />
                 ) : (
                   <span style={{ color: '#fff' }}>{inicialesUsuario}</span>
                 )}
               </button>
 
               {menuAbierto && (
-                <div style={{
-                  position: 'absolute',
-                  right: 0,
-                  top: 'calc(100% + 0.8rem)',
-                  backgroundColor: '#ffffff',
-                  borderRadius: '16px',
-                  boxShadow: '0 14px 30px rgba(43, 24, 48, 0.12)',
-                  border: '1px solid rgba(43, 24, 48, 0.06)',
-                  minWidth: '170px',
-                  overflow: 'hidden',
-                  zIndex: 20,
-                }}>
+                <div className="inicio-user-menu">
                   <button
                     type="button"
                     onClick={() => {
                       setMenuAbierto(false);
                       navigate('/perfil');
                     }}
-                    style={{
-                      width: '100%',
-                      border: 'none',
-                      background: '#fff',
-                      color: palette.ink,
-                      padding: '0.9rem 1rem',
-                      textAlign: 'left',
-                      fontSize: '0.92rem',
-                      fontWeight: '600',
-                      cursor: 'pointer',
-                    }}
                   >
                     Perfil
                   </button>
-                  <button
-                    type="button"
-                    onClick={cerrarSesion}
-                    style={{
-                      width: '100%',
-                      border: 'none',
-                      background: '#fff',
-                      color: palette.fucsiaDark,
-                      padding: '0.9rem 1rem',
-                      textAlign: 'left',
-                      fontSize: '0.92rem',
-                      fontWeight: '700',
-                      cursor: 'pointer',
-                      borderTop: '1px solid rgba(43, 24, 48, 0.08)',
-                    }}
-                  >
-                    Cerrar sesión
-                  </button>
+                  <button type="button" onClick={cerrarSesion}>Cerrar sesión</button>
                 </div>
               )}
             </div>
@@ -398,106 +284,50 @@ export default function InicioPage() {
       </header>
 
       {/* 2. HERO (con entrada animada al cargar) */}
-      <section style={{
-        backgroundColor: palette.fucsia,
-        color: '#ffffff',
-        padding: '5.5rem 5rem',
-        width: '100%',
-        margin: 0,
-        boxSizing: 'border-box',
-        backgroundImage: `radial-gradient(circle at 88% 15%, rgba(255,255,255,0.18) 0%, transparent 55%)`,
-        position: 'relative',
-        overflow: 'hidden',
-        display: 'grid',
-        gridTemplateColumns: '1.1fr 0.9fr',
-        gap: '3rem',
-        alignItems: 'center',
-      }}>
+      <section className="inicio-hero">
         <div className="hero-anim" style={{ position: 'relative', zIndex: 2 }}>
-          <span style={{
-            backgroundColor: 'rgba(255, 255, 255, 0.16)',
-            backdropFilter: 'blur(5px)',
-            padding: '0.5rem 1.2rem',
-            borderRadius: '30px',
-            fontSize: '0.8rem',
-            fontWeight: '600',
-            display: 'inline-block',
-            marginBottom: '1.5rem',
-            border: '1px solid rgba(255, 255, 255, 0.28)',
-          }}>
-            Nueva colección de temporada ya en tienda
-          </span>
+          <span className="inicio-hero-badge">Nueva colección de temporada ya en tienda</span>
 
-          <h1 className="display" style={{
-            fontSize: '3.4rem',
-            fontWeight: '600',
-            lineHeight: '1.1',
-            margin: '0 0 1.5rem 0',
-            letterSpacing: '-1px',
-          }}>
-            El estilo que te queda bien, sin pagar de más
-          </h1>
+          <h1 className="display inicio-hero-title">El estilo que te queda bien, sin pagar de más</h1>
 
-          <p style={{ fontSize: '1.1rem', opacity: '0.95', lineHeight: '1.6', maxWidth: '520px', margin: '0 0 2.2rem 0', fontWeight: '400' }}>
+          <p className="inicio-hero-copy">
             Prendas únicas seleccionadas con cuidado, atención personalizada en tienda y precios pensados para tu bolsillo. Renovar tu armario nunca fue tan fácil.
           </p>
 
           {!usuarioActual && (
-            <div style={{ display: 'flex', gap: '1rem', marginBottom: '2.8rem' }}>
-              <Link to="/iniciosesionregistro" style={{
-                backgroundColor: '#ffffff',
-                color: palette.fucsiaDark,
-                padding: '0.85rem 1.9rem',
-                borderRadius: '30px',
-                fontWeight: '700',
-                fontSize: '0.95rem',
-                textDecoration: 'none',
-                display: 'inline-block',
-              }}>
-                Iniciar Sesion
-              </Link>
-              <Link to="/catalogo-cliente" style={{
-                border: '2px solid rgba(255,255,255,0.6)',
-                color: '#ffffff',
-                padding: '0.8rem 1.7rem',
-                borderRadius: '30px',
-                fontWeight: '700',
-                fontSize: '0.95rem',
-                textDecoration: 'none',
-                display: 'inline-block',
-              }}>
-                Catálogo
-              </Link>
+            <div className="inicio-actions">
+              <Link to="/iniciosesionregistro" className="inicio-primary-btn">Iniciar Sesion</Link>
+              <Link to="/catalogo-cliente" className="inicio-secondary-btn">Catálogo</Link>
             </div>
           )}
 
-          <div style={{ display: 'flex', gap: '2.5rem', borderTop: '1px solid rgba(255,255,255,0.25)', paddingTop: '1.5rem' }}>
+          <div className="inicio-metrics">
             <div>
-              <div className="display" style={{ fontSize: '1.6rem', fontWeight: '600' }}>+300</div>
-              <div style={{ fontSize: '0.82rem', opacity: 0.85 }}>Oufits por hacer!</div>
+              <div className="display inicio-metric-value">+300</div>
+              <div className="inicio-metric-label">Oufits por hacer!</div>
             </div>
             <div>
-              <div className="display" style={{ fontSize: '1.6rem', fontWeight: '600' }}>4 años</div>
-              <div style={{ fontSize: '0.82rem', opacity: 0.85 }}>Atendiendo al barrio</div>
+              <div className="display inicio-metric-value">4 años</div>
+              <div className="inicio-metric-label">Atendiendo al barrio</div>
             </div>
             <div>
-              <div className="display" style={{ fontSize: '1.6rem', fontWeight: '600' }}>4.9</div>
-              <div style={{ fontSize: '0.82rem', opacity: 0.85 }}>Calificación de clientes</div>
+              <div className="display inicio-metric-value">4.9</div>
+              <div className="inicio-metric-label">Calificación de clientes</div>
             </div>
           </div>
         </div>
 
         {/* Collage visual con las prendas destacadas, con una pieza flotante */}
-        <div style={{ position: 'relative', zIndex: 2, display: 'grid', gridTemplateColumns: '1fr 1fr', gap: '1rem' }}>
-          <div className="floating" style={{ backgroundColor: palette.plum, borderRadius: '24px', height: '220px', display: 'flex', flexDirection: 'column', justifyContent: 'flex-end', padding: '1.2rem', gridRow: 'span 2' }}>
+        <div className="inicio-visual-grid">
+          <div className="inicio-visual-card inicio-visual-card--large floating">
             <IconDress />
             <span style={{ fontSize: '0.85rem', fontWeight: '600', marginTop: '0.6rem' }}>Mujer</span>
           </div>
-          <div style={{ backgroundColor: palette.gold, borderRadius: '24px', height: '160px', display: 'flex', flexDirection: 'column', justifyContent: 'flex-end', padding: '1.2rem' }}>
+          <div className="inicio-visual-card inicio-visual-card--gold" style={{ color: palette.plum }}>
             <IconShirt color={palette.plum} />
             <span style={{ fontSize: '0.85rem', fontWeight: '600', marginTop: '0.6rem', color: palette.plum }}>Hombre</span>
           </div>
-          <div className="floating-slow" style={{ backgroundColor: palette.sage, borderRadius: '24px', height: '160px', display: 'flex', flexDirection: 'column', justifyContent: 'flex-end', padding: '1.2rem' }}>
+          <div className="inicio-visual-card inicio-visual-card--sage floating-slow" style={{ color: palette.plum }}>
             <IconSwap color={palette.plum} />
             <span style={{ fontSize: '0.85rem', fontWeight: '600', marginTop: '0.6rem', color: palette.plum }}>Unisex</span>
           </div>
@@ -505,14 +335,14 @@ export default function InicioPage() {
       </section>
 
       {/* MARQUESINA: cinta con movimiento continuo entre el hero y el resto */}
-      <div style={{ backgroundColor: palette.plum, overflow: 'hidden', padding: '0.9rem 0' }}>
+      <div className="marquee-shell">
         <div className="marquee-track">
           {[...Array(2)].map((_, rep) => (
             <div key={rep} style={{ display: 'flex', alignItems: 'center' }}>
               {['Moda accesible', 'Atención cercana', 'Precios justos', 'Mujer, hombre y unisex', 'Prueba sin apuro'].map((frase, i) => (
-                <span key={i} style={{ display: 'flex', alignItems: 'center', color: '#ffffff', fontSize: '0.95rem', fontWeight: '600', whiteSpace: 'nowrap' }}>
+                <span key={i} className="marquee-item">
                   {frase}
-                  <span style={{ color: palette.fucsia, margin: '0 1.6rem', fontSize: '1.2rem' }}>●</span>
+                  <span className="marquee-dot">●</span>
                 </span>
               ))}
             </div>
@@ -521,12 +351,12 @@ export default function InicioPage() {
       </div>
 
       {/* 3. CATEGORÍAS */}
-      <Reveal as="section" style={{ padding: '4.5rem 5rem 1rem', boxSizing: 'border-box' }}>
-        <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'baseline', marginBottom: '2rem' }}>
-          <h2 className="display" style={{ fontSize: '2rem', fontWeight: '600', margin: 0, color: palette.ink }}>Categorias Disponibles</h2>
+      <Reveal as="section" className="inicio-section">
+        <div className="inicio-section-header">
+          <h2 className="inicio-section-title">Categorias Disponibles</h2>
         </div>
 
-        <div style={{ display: 'grid', gridTemplateColumns: 'repeat(3, 1fr)', gap: '1.4rem' }}>
+        <div className="inicio-category-grid">
           {categorias.map((cat) => {
             const isHovered = hoverCategory === cat.id;
             const { Icon } = cat;
@@ -536,26 +366,16 @@ export default function InicioPage() {
                 to={`/catalogo-cliente?genero=${encodeURIComponent(cat.nombre)}`}
                 onMouseEnter={() => setHoverCategory(cat.id)}
                 onMouseLeave={() => setHoverCategory(null)}
+                className="inicio-category-card"
                 style={{
                   backgroundColor: cat.color,
-                  borderRadius: '22px',
-                  padding: '2rem',
-                  height: '190px',
-                  display: 'flex',
-                  flexDirection: 'column',
-                  justifyContent: 'space-between',
-                  textDecoration: 'none',
-                  color: '#ffffff',
-                  transform: isHovered ? 'translateY(-6px) scale(1.01)' : 'translateY(0) scale(1)',
                   boxShadow: isHovered ? '0 16px 30px rgba(43,24,48,0.18)' : '0 4px 14px rgba(43,24,48,0.06)',
-                  transition: 'transform 0.25s ease, box-shadow 0.25s ease',
-                  boxSizing: 'border-box',
                 }}
               >
                 <Icon />
                 <div>
-                  <div style={{ fontWeight: '700', fontSize: '1.2rem' }}>{cat.nombre}</div>
-                  <div style={{ fontSize: '0.82rem', opacity: 0.85 }}>{cat.cantidad}</div>
+                  <div className="inicio-category-name">{cat.nombre}</div>
+                  <div className="inicio-category-amount">{cat.cantidad}</div>
                 </div>
               </Link>
             );
@@ -564,30 +384,20 @@ export default function InicioPage() {
       </Reveal>
 
       {/* 4. DESCUBRE TU LOOK (panel interactivo con animación al cambiar de pestaña) */}
-      <Reveal as="section" id="looks" style={{ padding: '4.5rem 5rem', boxSizing: 'border-box' }}>
-        <div style={{ marginBottom: '2rem' }}>
-          <h2 className="display" style={{ fontSize: '2rem', fontWeight: '600', margin: '0 0 0.4rem 0', color: palette.ink }}>Descubre tu look</h2>
-          <p style={{ color: palette.slate, margin: 0, fontSize: '1rem' }}>Elige el momento y te mostramos cómo combinarlo.</p>
+      <Reveal as="section" id="looks" className="inicio-look-section">
+        <div className="inicio-look-header">
+          <h2>Descubre tu look</h2>
+          <p>Elige el momento y te mostramos cómo combinarlo.</p>
         </div>
 
-        <div style={{ display: 'flex', gap: '0.7rem', marginBottom: '2rem' }}>
+        <div className="inicio-look-tabs">
           {looks.map((look) => {
             const isActive = look.id === activeLook;
             return (
               <button
                 key={look.id}
                 onClick={() => setActiveLook(look.id)}
-                style={{
-                  padding: '0.7rem 1.5rem',
-                  borderRadius: '30px',
-                  border: isActive ? 'none' : `1.5px solid ${palette.sand}`,
-                  backgroundColor: isActive ? palette.fucsia : '#ffffff',
-                  color: isActive ? '#ffffff' : palette.slate,
-                  fontWeight: '700',
-                  fontSize: '0.9rem',
-                  cursor: 'pointer',
-                  transition: 'background-color 0.25s ease, color 0.25s ease, border-color 0.25s ease',
-                }}
+                className={`inicio-look-tab ${isActive ? 'is-active' : ''}`}
               >
                 {look.tab}
               </button>
@@ -595,76 +405,33 @@ export default function InicioPage() {
           })}
         </div>
 
-        <div key={activeLookData.id} className="look-panel" style={{
-          display: 'grid',
-          gridTemplateColumns: '1fr 1.3fr',
-          gap: '2.5rem',
-          alignItems: 'center',
-          backgroundColor: '#ffffff',
-          border: `1px solid ${palette.sand}`,
-          borderRadius: '28px',
-          padding: '2.5rem',
-        }}>
-          <div style={{
-            backgroundColor: activeLookData.color,
-            borderRadius: '22px',
-            height: '260px',
-            display: 'flex',
-            alignItems: 'center',
-            justifyContent: 'center',
-          }}>
+        <div key={activeLookData.id} className="look-panel inicio-look-panel">
+          <div
+            className="inicio-look-visual"
+            style={{ backgroundColor: activeLookData.color }}
+          >
             <activeLookData.Icon />
           </div>
           <div>
-            <span style={{ color: palette.fucsiaDark, fontSize: '0.8rem', fontWeight: '700' }}>{activeLookData.tab}</span>
-            <h3 className="display" style={{ fontSize: '1.7rem', fontWeight: '600', margin: '0.5rem 0 1rem 0', color: palette.ink }}>
-              {activeLookData.title}
-            </h3>
-            <p style={{ color: palette.slate, fontSize: '1rem', lineHeight: '1.7', margin: '0 0 1.5rem 0' }}>
-              {activeLookData.desc}
-            </p>
-            <Link to="/catalogo-cliente" style={{
-              color: palette.fucsiaDark,
-              fontWeight: '700',
-              fontSize: '0.9rem',
-              textDecoration: 'none',
-            }}>
-              Ver prendas  →
-            </Link>
+            <span className="inicio-look-tag">{activeLookData.tab}</span>
+            <h3 className="inicio-look-title">{activeLookData.title}</h3>
+            <p className="inicio-look-copy">{activeLookData.desc}</p>
+            <Link to="/catalogo-cliente" className="inicio-look-link">Ver prendas  →</Link>
           </div>
         </div>
       </Reveal>
 
       {/* 5. HISTORIA Y VALORES */}
-      <Reveal as="section" id="historia" style={{
-        width: '100%',
-        padding: '4.5rem 5rem',
-        boxSizing: 'border-box',
-        display: 'grid',
-        gridTemplateColumns: '1.1fr 1.9fr',
-        gap: '3rem',
-        backgroundColor: palette.sand,
-      }}>
-        <div style={{
-          backgroundColor: '#ffffff',
-          padding: '3rem',
-          borderRadius: '28px',
-          display: 'flex',
-          flexDirection: 'column',
-          justifyContent: 'center',
-        }}>
-          <span style={{ color: palette.fucsiaDark, fontSize: '0.82rem', fontWeight: '700', marginBottom: '1rem', display: 'block' }}>
-            Nuestra historia
-          </span>
-          <h2 className="display" style={{ fontSize: '2.2rem', color: palette.ink, lineHeight: '1.2', margin: '0 0 1.5rem 0', fontWeight: '600' }}>
-            De un local de barrio a un estilo auténtico
-          </h2>
-          <p style={{ color: palette.slate, fontSize: '1.02rem', lineHeight: '1.7', margin: 0 }}>
+      <Reveal as="section" id="historia" className="inicio-story-section">
+        <div className="inicio-story-panel">
+          <span className="inicio-story-kicker">Nuestra historia</span>
+          <h2 className="inicio-story-title">De un local de barrio a un estilo auténtico</h2>
+          <p className="inicio-story-text">
             Pague Menos nació en un pequeño local cercano con la misión de ofrecer moda accesible, atención amable y prendas seleccionadas con cuidado. Queremos que cada visita a nuestra tienda sea una experiencia cercana, agradable y confiable.
           </p>
         </div>
 
-        <div style={{ display: 'grid', gridTemplateColumns: 'repeat(2, 1fr)', gap: '1.5rem' }}>
+        <div className="inicio-story-grid">
           {[
             { id: 1, tag: 'Valores', title: 'Cercanía y confianza', desc: 'Creemos en el comercio local, en precios claros y en un trato honesto con cada cliente que nos visita.', special: false },
             { id: 2, tag: 'Tienda local', title: 'Compra en tienda', desc: 'Visítanos y pruébate las prendas en persona. Aquí tenemos lo mejor para que te lleves lo que realmente te queda bien.', special: true },
@@ -677,32 +444,17 @@ export default function InicioPage() {
                 key={card.id}
                 onMouseEnter={() => setCardHover(card.id)}
                 onMouseLeave={() => setCardHover(null)}
+                className={`inicio-story-card ${card.special ? 'inicio-story-card--special' : 'inicio-story-card--default'}`}
                 style={{
-                  backgroundColor: card.special ? palette.fucsia : '#ffffff',
-                  color: card.special ? '#ffffff' : palette.ink,
-                  padding: '2.2rem',
-                  borderRadius: '26px',
+                  transform: isHovered ? 'translateY(-6px)' : 'translateY(0)',
                   boxShadow: isHovered
                     ? (card.special ? '0 15px 35px rgba(230, 57, 130, 0.35)' : '0 15px 35px rgba(43,24,48,0.08)')
                     : (card.special ? '0 10px 25px rgba(230, 57, 130, 0.22)' : '0 2px 10px rgba(43,24,48,0.03)'),
-                  transform: isHovered ? 'translateY(-6px)' : 'translateY(0)',
-                  transition: 'all 0.3s cubic-bezier(0.4, 0, 0.2, 1)',
                 }}
               >
-                <span style={{
-                  color: card.special ? '#ffffff' : palette.fucsiaDark,
-                  fontSize: '0.78rem',
-                  fontWeight: '700',
-                  opacity: card.special ? 0.9 : 1,
-                }}>
-                  {card.tag}
-                </span>
-                <h3 style={{ fontSize: '1.25rem', margin: '0.7rem 0 0.7rem 0', fontWeight: '700' }}>
-                  {card.title}
-                </h3>
-                <p style={{ color: card.special ? '#ffffff' : palette.slate, fontSize: '0.92rem', lineHeight: '1.6', margin: 0, opacity: card.special ? 0.95 : 1 }}>
-                  {card.desc}
-                </p>
+                <span className="inicio-story-card-tag">{card.tag}</span>
+                <h3>{card.title}</h3>
+                <p>{card.desc}</p>
               </div>
             );
           })}
@@ -710,62 +462,51 @@ export default function InicioPage() {
       </Reveal>
 
       {/* 6. NÚMEROS QUE NOS RESPALDAN (contadores animados al hacer scroll) */}
-      <Reveal as="section" style={{
-        backgroundColor: palette.plum,
-        color: '#ffffff',
-        padding: '4rem 5rem',
-        boxSizing: 'border-box',
-        display: 'grid',
-        gridTemplateColumns: 'repeat(4, 1fr)',
-        gap: '2rem',
-        textAlign: 'center',
-      }}>
+      <Reveal as="section" className="inicio-stats-section">
         <AnimatedStat target={300} prefix="+" label="Oufits por hacer!" color={palette.fucsia} />
         <AnimatedStat target={4} label="Años en el barrio" color={palette.gold} />
         <AnimatedStat target={1200} prefix="+" label="Clientes felices" color={palette.sage} />
         <AnimatedStat target={4.9} decimals={1} label="Calificación promedio" color={palette.fucsia} />
       </Reveal>
 
-
-
       {/* 8. FOOTER */}
-      <footer style={{ backgroundColor: palette.ink, color: 'rgba(255,255,255,0.75)', padding: '3.5rem 5rem 2rem', boxSizing: 'border-box' }}>
-        <div style={{ display: 'grid', gridTemplateColumns: '1.4fr 1fr 1fr 1fr', gap: '2rem', marginBottom: '2.5rem' }}>
+      <footer className="inicio-footer">
+        <div className="inicio-footer-grid">
           <div>
-            <div className="display" style={{ fontSize: '1.2rem', fontWeight: '700', color: '#ffffff', marginBottom: '0.8rem' }}>
-              Pague <span style={{ color: palette.fucsia, fontStyle: 'italic' }}>Menos</span>
+            <div className="display inicio-footer-brand">
+              Pague <span className="inicio-brand-accent">Menos</span>
             </div>
-            <p style={{ fontSize: '0.88rem', lineHeight: '1.6', maxWidth: '260px', margin: 0 }}>
+            <p className="inicio-footer-copy">
               Moda accesible y trato cercano desde nuestro local de barrio hasta tu clóset.
             </p>
           </div>
           <div>
-            <div style={{ color: '#ffffff', fontWeight: '700', fontSize: '0.9rem', marginBottom: '0.9rem' }}>Tienda</div>
-            <div style={{ display: 'flex', flexDirection: 'column', gap: '0.6rem', fontSize: '0.88rem' }}>
-              <a href="#mujer" style={{ color: 'inherit', textDecoration: 'none' }}>Mujer</a>
-              <a href="#hombre" style={{ color: 'inherit', textDecoration: 'none' }}>Hombre</a>
-              <a href="#unisex" style={{ color: 'inherit', textDecoration: 'none' }}>Unisex</a>
-              <a href="#looks" style={{ color: 'inherit', textDecoration: 'none' }}>Descubre tu look</a>
+            <div className="inicio-footer-group-title">Tienda</div>
+            <div className="inicio-footer-links">
+              <a href="#mujer">Mujer</a>
+              <a href="#hombre">Hombre</a>
+              <a href="#unisex">Unisex</a>
+              <a href="#looks">Descubre tu look</a>
             </div>
           </div>
           <div>
-            <div style={{ color: '#ffffff', fontWeight: '700', fontSize: '0.9rem', marginBottom: '0.9rem' }}>Ayuda</div>
-            <div style={{ display: 'flex', flexDirection: 'column', gap: '0.6rem', fontSize: '0.88rem' }}>
-              <a href="#" style={{ color: 'inherit', textDecoration: 'none' }}>Preguntas frecuentes</a>
-              <a href="#" style={{ color: 'inherit', textDecoration: 'none' }}>Tallas y medidas</a>
-              <a href="#" style={{ color: 'inherit', textDecoration: 'none' }}>Contacto</a>
+            <div className="inicio-footer-group-title">Ayuda</div>
+            <div className="inicio-footer-links">
+              <a href="#">Preguntas frecuentes</a>
+              <a href="#">Tallas y medidas</a>
+              <a href="#">Contacto</a>
             </div>
           </div>
           <div>
-            <div style={{ color: '#ffffff', fontWeight: '700', fontSize: '0.9rem', marginBottom: '0.9rem' }}>Visítanos</div>
-            <div style={{ fontSize: '0.88rem', lineHeight: '1.7' }}>
+            <div className="inicio-footer-group-title">Visítanos</div>
+            <div className="inicio-footer-contact">
               Calle 45 #12-34, Bogotá<br />
               Lun a sáb, 9am – 7pm<br />
               hola@paguemenos.co
             </div>
           </div>
         </div>
-        <div style={{ borderTop: '1px solid rgba(255,255,255,0.12)', paddingTop: '1.5rem', fontSize: '0.8rem', display: 'flex', justifyContent: 'space-between' }}>
+        <div className="inicio-footer-bottom">
           <span>© {new Date().getFullYear()} Pague Menos. Todos los derechos reservados.</span>
           <span>Hecho con cariño en Bogotá</span>
         </div>

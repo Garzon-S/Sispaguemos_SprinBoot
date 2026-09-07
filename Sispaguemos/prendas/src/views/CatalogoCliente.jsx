@@ -1,6 +1,7 @@
 import { useEffect, useMemo, useState } from 'react';
 import { useLocation } from 'react-router-dom';
 import { obtenerPrendas } from '../services/prendaService';
+import '../styles/CatalogoCliente.css';
 
 // Paleta "Pague Menos": fucsia de marca + aubergine casi negro + dorado + salvia,
 // igual que la home, para que el catálogo se sienta parte de la misma tienda.
@@ -50,9 +51,16 @@ function getSafePrenda(prenda = {}) {
     genero: prenda.genero || 'Unisex',
     precio: Number(prenda.precioVenta ?? prenda.precio_venta ?? 0),
     stock: Number(prenda.cantidadDisponibleVenta ?? prenda.cantidad_disponible_venta ?? 0),
-    estado: Number(prenda.estado ?? 1),
+    estado: prenda.estado ?? 1,
     imagen: getImageSrc(prenda.imagenPrend || prenda.imagen_prend),
   };
+}
+
+function prendaEstaActiva(estado) {
+  const estadoNormalizado = String(estado ?? '').trim().toLowerCase();
+  return estadoNormalizado === '1'
+    || estadoNormalizado === 'activo'
+    || estadoNormalizado === 'disponible';
 }
 
 const GENRES = ['Todos', 'Hombre', 'Mujer', 'Unisex', 'Niño', 'Niña'];
@@ -145,7 +153,7 @@ export default function CatalogoCliente({ onVolverInicio, onAgregarCarrito, onVe
         const payload = Array.isArray(data) ? data : Array.isArray(data?.value) ? data.value : [];
         const activas = payload
           .map(getSafePrenda)
-          .filter((p) => Number(p.estado) === 1);
+          .filter((p) => prendaEstaActiva(p.estado));
         setPrendas(activas);
         setError('');
       } catch (err) {
@@ -300,124 +308,20 @@ export default function CatalogoCliente({ onVolverInicio, onAgregarCarrito, onVe
   );
 
   return (
-    <div style={{
-      minHeight: '100vh',
-      width: '100%',
-      minWidth: '100vw',
-      background: palette.ivory,
-      boxSizing: 'border-box',
-      color: palette.ink,
-      fontFamily: 'Inter, sans-serif',
-      position: 'relative',
-      overflowX: 'hidden',
-    }}>
-      <style>{`
-        html, body, #root {
-          margin: 0;
-          min-height: 100%;
-          width: 100%;
-          background: ${palette.ivory};
-        }
-        body { min-height: 100vh; }
-        #root { max-width: none !important; width: 100% !important; border: none !important; }
-
-        @keyframes cc-slideDown { from { opacity: 0; transform: translateY(-14px); } to { opacity: 1; transform: translateY(0); } }
-        @keyframes cc-fadeUp { from { opacity: 0; transform: translateY(18px); } to { opacity: 1; transform: translateY(0); } }
-        @keyframes cc-bump {
-          0% { transform: scale(1); }
-          35% { transform: scale(1.22); }
-          60% { transform: scale(0.94); }
-          100% { transform: scale(1); }
-        }
-        @keyframes cc-ring {
-          0% { box-shadow: 0 0 0 0 rgba(230,60,134,0.45); }
-          100% { box-shadow: 0 0 0 14px rgba(230,60,134,0); }
-        }
-        @keyframes cc-cart-overlay-in { from { opacity: 0; } to { opacity: 1; } }
-        @keyframes cc-cart-panel-in { from { opacity: 0; transform: translateX(30px); } to { opacity: 1; transform: translateX(0); } }
-        @keyframes cc-float {
-          0%, 100% { transform: translate(0, 0); }
-          50% { transform: translate(-10px, -18px); }
-        }
-        .cc-topbar { animation: cc-slideDown 0.5s ease both; }
-        .cc-hero { animation: cc-fadeUp 0.6s ease 0.08s both; }
-        .cc-blob { animation: cc-float 7s ease-in-out infinite; }
-
-        .cc-chip {
-          transition: transform 0.2s ease, box-shadow 0.2s ease, opacity 0.2s ease;
-        }
-        .cc-chip:hover { transform: translateY(-3px); }
-        .cc-chip:active { transform: translateY(0) scale(0.97); }
-
-        .cc-card {
-          animation: cc-fadeUp 0.55s ease both;
-          transition: transform 0.28s ease, box-shadow 0.28s ease, border-color 0.28s ease;
-        }
-        .cc-card:hover {
-          transform: translateY(-8px);
-          box-shadow: 0 26px 46px rgba(28,15,27,0.18);
-          border-color: ${palette.fucsia} !important;
-        }
-        .cc-card:hover .cc-img { transform: scale(1.07); }
-        .cc-img { transition: transform 0.5s ease; }
-
-        .cc-home-btn, .cc-cart-btn, .cc-btn-primary, .cc-btn-secondary {
-          transition: transform 0.16s ease, box-shadow 0.2s ease, background 0.2s ease, opacity 0.2s ease;
-        }
-        .cc-home-btn:hover { transform: translateY(-2px); background: rgba(28,15,27,0.05) !important; }
-        .cc-home-btn:active { transform: translateY(0) scale(0.97); }
-        .cc-cart-btn:hover { transform: translateY(-2px); }
-        .cc-cart-btn:active { transform: scale(0.95); }
-        .cc-cart-btn.bump .cc-cart-icon { animation: cc-bump 0.48s ease; }
-        .cc-cart-btn.bump { animation: cc-ring 0.55s ease-out; }
-        .cc-btn-primary:hover { box-shadow: 0 14px 24px rgba(230,60,134,0.32); transform: translateY(-2px); }
-        .cc-btn-primary:active { transform: translateY(0) scale(0.98); }
-        .cc-btn-secondary:hover { background: ${palette.plum} !important; color: #fff !important; }
-        .cc-btn-secondary:active { transform: scale(0.98); }
-        .cc-search:focus-within { border-color: #fff !important; box-shadow: 0 0 0 4px rgba(255,255,255,0.25) !important; }
-
-        @media (prefers-reduced-motion: reduce) {
-          .cc-topbar, .cc-hero, .cc-card, .cc-blob, .cc-cart-btn.bump, .cc-cart-btn.bump .cc-cart-icon { animation: none !important; }
-          .cc-card:hover, .cc-home-btn:hover, .cc-cart-btn:hover, .cc-btn-primary:hover, .cc-chip:hover { transform: none !important; }
-        }
-      `}</style>
+    <div className="cc-page">
 
       {/* Barra superior: marca + volver al inicio + carrito */}
-      <div className="cc-topbar" style={{
-        background: palette.white,
-        padding: '1rem 1.25rem',
-        borderBottom: `1px solid rgba(28,15,27,0.08)`,
-      }}>
-        <div style={{
-          maxWidth: '1200px',
-          margin: '0 auto',
-          display: 'flex',
-          alignItems: 'center',
-          justifyContent: 'space-between',
-          gap: '1rem',
-        }}>
-          <span style={{ fontFamily: 'Fraunces, Georgia, serif', fontSize: '1.35rem', fontWeight: 700, color: palette.plum }}>
-            Pague <span style={{ fontStyle: 'italic', color: palette.fucsia }}>Menos</span>
+      <div className="cc-topbar">
+        <div className="cc-topbar-inner">
+          <span className="cc-brand">
+            Pague <span className="cc-brand-accent">Menos</span>
           </span>
 
-          <div style={{ display: 'flex', alignItems: 'center', gap: '0.7rem' }}>
+          <div className="cc-topbar-actions">
             <button
               type="button"
               onClick={handleVolverInicio}
               className="cc-home-btn"
-              style={{
-                display: 'inline-flex',
-                alignItems: 'center',
-                gap: '0.5rem',
-                background: 'transparent',
-                border: `1px solid rgba(28,15,27,0.15)`,
-                color: palette.plum,
-                borderRadius: '999px',
-                padding: '0.55rem 1.05rem',
-                fontWeight: 700,
-                fontSize: '0.85rem',
-                cursor: 'pointer',
-              }}
             >
               <span style={{ fontSize: '1rem' }}>←</span>
               Volver al inicio
@@ -428,36 +332,10 @@ export default function CatalogoCliente({ onVolverInicio, onAgregarCarrito, onVe
               onClick={abrirCarrito}
               className={`cc-cart-btn${cartBump ? ' bump' : ''}`}
               aria-label={`Carrito de compras, ${cartCount} artículos`}
-              style={{
-                position: 'relative',
-                display: 'inline-flex',
-                alignItems: 'center',
-                gap: '0.55rem',
-                background: palette.plum,
-                border: 'none',
-                color: palette.white,
-                borderRadius: '999px',
-                padding: '0.55rem 1.1rem 0.55rem 0.85rem',
-                fontWeight: 800,
-                fontSize: '0.85rem',
-                cursor: 'pointer',
-                boxShadow: '0 10px 20px rgba(28,15,27,0.18)',
-              }}
             >
               <span className="cc-cart-icon"><CartIcon /></span>
               Carrito
-              <span style={{
-                minWidth: '20px',
-                height: '20px',
-                borderRadius: '999px',
-                background: palette.fucsia,
-                color: '#fff',
-                fontSize: '0.72rem',
-                display: 'inline-flex',
-                alignItems: 'center',
-                justifyContent: 'center',
-                padding: '0 5px',
-              }}>
+              <span className="cc-cart-count">
                 {cartCount}
               </span>
             </button>
@@ -466,47 +344,19 @@ export default function CatalogoCliente({ onVolverInicio, onAgregarCarrito, onVe
       </div>
 
       {carritoAbierto && (
-        <div
-          style={{
-            position: 'fixed',
-            inset: 0,
-            background: 'rgba(21, 11, 20, 0.45)',
-            zIndex: 30,
-            display: 'flex',
-            justifyContent: 'flex-end',
-            animation: 'cc-cart-overlay-in 0.25s ease-out forwards',
-          }}
+        <div className="cc-cart-overlay"
           onClick={cerrarCarrito}
         >
           <aside
             onClick={(e) => e.stopPropagation()}
-            style={{
-              width: '380px',
-              maxWidth: '90vw',
-              height: '100vh',
-              background: palette.ivory,
-              boxShadow: '-12px 0 30px rgba(21, 11, 20, 0.2)',
-              padding: '1.4rem 1.2rem',
-              boxSizing: 'border-box',
-              display: 'flex',
-              flexDirection: 'column',
-              gap: '1rem',
-              animation: 'cc-cart-panel-in 0.3s cubic-bezier(0.22, 1, 0.36, 1) forwards',
-            }}
+            className="cc-cart-panel"
           >
-            <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center' }}>
-              <h2 style={{ margin: 0, fontSize: '1.5rem', fontFamily: 'Fraunces, Georgia, serif', color: palette.plum }}>Carrito</h2>
+            <div className="cc-cart-header">
+              <h2>Carrito</h2>
               <button
                 type="button"
                 onClick={cerrarCarrito}
-                style={{
-                  border: 'none',
-                  background: 'transparent',
-                  fontSize: '1.7rem',
-                  cursor: 'pointer',
-                  color: palette.plum,
-                  lineHeight: 1,
-                }}
+                className="cc-close-btn"
                 aria-label="Cerrar carrito"
               >
                 ×
@@ -514,79 +364,36 @@ export default function CatalogoCliente({ onVolverInicio, onAgregarCarrito, onVe
             </div>
 
             {usuarioActual && carrito.length > 0 ? (
-              <div style={{
-                flex: 1,
-                display: 'flex',
-                flexDirection: 'column',
-                gap: '0.9rem',
-                borderRadius: '22px',
-                background: palette.white,
-                border: `1px solid rgba(28,15,27,0.08)`,
-                padding: '1rem',
-                overflow: 'hidden',
-              }}>
-                <div style={{ display: 'flex', flexDirection: 'column', gap: '0.75rem', overflowY: 'auto', paddingRight: '0.2rem' }}>
+              <div className="cc-cart-box">
+                <div className="cc-cart-items">
                   {carrito.map((item) => (
-                    <div key={item.id} style={{
-                      display: 'flex',
-                      gap: '0.75rem',
-                      alignItems: 'center',
-                      padding: '0.65rem 0.4rem',
-                      borderBottom: `1px solid rgba(28,15,27,0.08)`,
-                    }}>
-                      <div style={{
-                        width: '58px', height: '58px', borderRadius: '12px', overflow: 'hidden', background: palette.ivorySoft,
-                        display: 'flex', alignItems: 'center', justifyContent: 'center', flexShrink: 0,
-                      }}>
+                    <div key={item.id} className="cc-cart-item">
+                      <div className="cc-cart-item-image">
                         {item.imagen ? (
-                          <img src={item.imagen} alt={item.nombre} style={{ width: '100%', height: '100%', objectFit: 'cover' }} />
+                          <img src={item.imagen} alt={item.nombre} />
                         ) : (
                           <span style={{ color: palette.plum }}><GenreIcon genero="Hombre" color="currentColor" /></span>
                         )}
                       </div>
 
-                      <div style={{ flex: 1, minWidth: 0 }}>
-                        <div style={{ fontWeight: 800, color: palette.plum, fontSize: '0.94rem', lineHeight: 1.35 }}>{item.nombre}</div>
-                        <div style={{ marginTop: '0.5rem', display: 'flex', alignItems: 'center', gap: '0.5rem' }}>
+                      <div className="cc-cart-item-info">
+                        <div className="cc-cart-item-name">{item.nombre}</div>
+                        <div className="cc-cart-item-controls">
                           <button
                             type="button"
                             onClick={() => restarUnidadCarrito(item.id)}
-                            style={{
-                              width: '28px',
-                              height: '28px',
-                              borderRadius: '8px',
-                              border: `1px solid ${palette.plum}`,
-                              background: palette.white,
-                              color: palette.plum,
-                              fontWeight: 800,
-                              cursor: 'pointer',
-                              display: 'flex',
-                              alignItems: 'center',
-                              justifyContent: 'center',
-                            }}
+                            className="cc-quantity-btn cc-quantity-btn--minus"
                             aria-label={`Restar una unidad de ${item.nombre}`}
                           >
                             −
                           </button>
-                          <span style={{ fontSize: '0.8rem', color: palette.slate, fontWeight: 700, minWidth: '28px', textAlign: 'center' }}>
+                          <span className="cc-quantity-value">
                             {item.cantidad}
                           </span>
                           <button
                             type="button"
                             onClick={() => sumarUnidadCarrito(item.id)}
-                            style={{
-                              width: '28px',
-                              height: '28px',
-                              borderRadius: '8px',
-                              border: `1px solid ${palette.fucsia}`,
-                              background: palette.fucsia,
-                              color: '#fff',
-                              fontWeight: 800,
-                              cursor: 'pointer',
-                              display: 'flex',
-                              alignItems: 'center',
-                              justifyContent: 'center',
-                            }}
+                            className="cc-quantity-btn cc-quantity-btn--plus"
                             aria-label={`Sumar una unidad de ${item.nombre}`}
                           >
                             +
@@ -594,23 +401,14 @@ export default function CatalogoCliente({ onVolverInicio, onAgregarCarrito, onVe
                         </div>
                       </div>
 
-                      <div style={{ fontWeight: 800, color: palette.fucsiaDeep, fontSize: '0.88rem', whiteSpace: 'nowrap' }}>
+                      <div className="cc-cart-item-price">
                         {formatCurrency(Number(item.precio || 0) * Number(item.cantidad || 0))}
                       </div>
                     </div>
                   ))}
                 </div>
 
-                <div style={{
-                  marginTop: 'auto',
-                  borderTop: `1px solid rgba(28,15,27,0.08)`,
-                  paddingTop: '0.9rem',
-                  display: 'flex',
-                  justifyContent: 'space-between',
-                  alignItems: 'center',
-                  color: palette.plum,
-                  fontWeight: 800,
-                }}>
+                <div className="cc-cart-total">
                   <span>Total</span>
                   <span>{formatCurrency(subtotalCarrito)}</span>
                 </div>
@@ -621,35 +419,16 @@ export default function CatalogoCliente({ onVolverInicio, onAgregarCarrito, onVe
                     setCarritoAbierto(false);
                     window.location.href = '/facturacion';
                   }}
-                  style={{
-                    marginTop: '0.2rem',
-                    background: `linear-gradient(135deg, ${palette.fucsia} 0%, ${palette.fucsiaDeep} 100%)`,
-                    border: 'none',
-                    color: '#fff',
-                    borderRadius: '14px',
-                    padding: '0.9rem 1rem',
-                    fontWeight: 800,
-                    cursor: 'pointer',
-                  }}
+                  className="cc-payment-btn"
                 >
                   Proceder al pago
                 </button>
               </div>
             ) : (
-              <div style={{
-                flex: 1,
-                display: 'flex',
-                alignItems: 'center',
-                justifyContent: 'center',
-                textAlign: 'center',
-                borderRadius: '22px',
-                background: palette.white,
-                border: `1px solid rgba(28,15,27,0.08)`,
-                padding: '1.5rem',
-              }}>
+              <div className="cc-cart-empty">
                 <div>
-                  <div style={{ color: palette.fucsia, marginBottom: '0.7rem' }}><CartIcon /></div>
-                  <p style={{ margin: 0, color: palette.plum, fontSize: '1.05rem', fontWeight: 700, lineHeight: 1.5 }}>
+                  <div className="cc-cart-empty-icon"><CartIcon /></div>
+                  <p>
                     {cartEmptyMessage}
                   </p>
 
@@ -657,17 +436,7 @@ export default function CatalogoCliente({ onVolverInicio, onAgregarCarrito, onVe
                     <button
                       type="button"
                       onClick={irAIniciarSesion}
-                      style={{
-                        marginTop: '1rem',
-                        background: `linear-gradient(135deg, ${palette.fucsia} 0%, ${palette.fucsiaDeep} 100%)`,
-                        border: 'none',
-                        color: '#fff',
-                        borderRadius: '14px',
-                        padding: '0.8rem 1.1rem',
-                        fontWeight: 800,
-                        cursor: 'pointer',
-                        minWidth: '180px',
-                      }}
+                      className="cc-login-btn"
                     >
                       Iniciar sesión
                     </button>
@@ -680,75 +449,24 @@ export default function CatalogoCliente({ onVolverInicio, onAgregarCarrito, onVe
       )}
 
       {/* Hero fucsia: encabezado, buscador y filtro por género */}
-      <div className="cc-hero" style={{
-        position: 'relative',
-        overflow: 'hidden',
-        background: `linear-gradient(160deg, ${palette.fucsia} 0%, ${palette.fucsiaDeep} 100%)`,
-        padding: '3.2rem 1.25rem 3rem',
-      }}>
-        <div className="cc-blob" style={{
-          position: 'absolute',
-          top: '-90px',
-          right: '-70px',
-          width: '280px',
-          height: '280px',
-          borderRadius: '50%',
-          background: 'rgba(255,255,255,0.08)',
-          filter: 'blur(2px)',
-          pointerEvents: 'none',
-        }} />
+      <div className="cc-hero">
+        <div className="cc-blob" />
 
-        <div style={{ maxWidth: '1200px', margin: '0 auto', position: 'relative' }}>
-          <h1 style={{
-            margin: 0,
-            fontSize: 'clamp(2rem, 4vw, 3rem)',
-            fontFamily: 'Fraunces, Georgia, serif',
-            fontWeight: 700,
-            lineHeight: 1.15,
-            color: palette.white,
-            maxWidth: '640px',
-          }}>
+        <div className="cc-content-inner" style={{ position: 'relative' }}>
+          <h1>
             Explora el catálogo
           </h1>
-          <p style={{
-            margin: '0.85rem 0 1.8rem',
-            color: 'rgba(255,255,255,0.9)',
-            fontSize: '1.02rem',
-            lineHeight: 1.6,
-            maxWidth: '520px',
-          }}>
+          <p className="cc-hero-copy">
             Prendas únicas seleccionadas con cuidado y precios pensados para tu bolsillo.
           </p>
 
-          <div className="cc-search" style={{
-            display: 'flex',
-            alignItems: 'center',
-            gap: '0.75rem',
-            background: 'rgba(255,255,255,0.16)',
-            border: `1px solid rgba(255,255,255,0.55)`,
-            borderRadius: '999px',
-            padding: '0.75rem 1.1rem',
-            maxWidth: '460px',
-            marginBottom: '1.6rem',
-          }}>
+          <div className="cc-search">
             <span style={{ color: palette.white, display: 'inline-flex' }}><SearchIcon /></span>
             <input
               type="text"
               value={busqueda}
               onChange={(e) => setBusqueda(e.target.value)}
               placeholder="Buscar por nombre, género o palabra clave"
-              style={{
-                border: 'none',
-                outline: 'none',
-                width: '100%',
-                background: 'transparent',
-                fontSize: '0.95rem',
-                color: '#ffffff',
-                fontWeight: 600,
-                WebkitTextFillColor: '#ffffff',
-                caretColor: '#ffffff',
-                padding: 0,
-              }}
               onFocus={(e) => {
                 e.target.style.color = '#ffffff';
               }}
@@ -758,7 +476,7 @@ export default function CatalogoCliente({ onVolverInicio, onAgregarCarrito, onVe
             />
           </div>
 
-          <div style={{ display: 'flex', gap: '0.6rem', flexWrap: 'wrap' }}>
+          <div className="cc-filter-list">
             {GENRES.map((genero) => {
               const activo = generoSeleccionado === genero;
               const colores = genero === 'Todos' ? { bg: palette.plum, text: palette.ivory } : genreStyle(genero);
@@ -768,20 +486,7 @@ export default function CatalogoCliente({ onVolverInicio, onAgregarCarrito, onVe
                   type="button"
                   onClick={() => setGeneroSeleccionado(genero)}
                   className="cc-chip"
-                  style={{
-                    display: 'inline-flex',
-                    alignItems: 'center',
-                    gap: '0.45rem',
-                    border: 'none',
-                    background: activo ? colores.bg : 'rgba(255,255,255,0.16)',
-                    color: activo ? colores.text : palette.white,
-                    borderRadius: '999px',
-                    padding: '0.6rem 1rem',
-                    fontWeight: 700,
-                    fontSize: '0.88rem',
-                    cursor: 'pointer',
-                    boxShadow: activo ? '0 10px 20px rgba(21,11,20,0.25)' : 'none',
-                  }}
+                  style={{ background: activo ? colores.bg : 'rgba(255,255,255,0.16)', color: activo ? colores.text : palette.white, boxShadow: activo ? '0 10px 20px rgba(21,11,20,0.25)' : 'none' }}
                 >
                   <span aria-hidden="true" style={{ display: 'inline-flex' }}><GenreIcon genero={genero} /></span>
                   {genero}
@@ -793,189 +498,82 @@ export default function CatalogoCliente({ onVolverInicio, onAgregarCarrito, onVe
       </div>
 
       {/* Contenido: grilla de prendas */}
-      <div style={{ padding: '2.6rem 1.25rem 4rem' }}>
-        <div style={{ maxWidth: '1200px', margin: '0 auto' }}>
-          <p style={{ margin: '0 0 1.4rem', color: palette.slate, fontWeight: 700, fontSize: '0.92rem' }}>
+      <div className="cc-content">
+        <div className="cc-content-inner">
+          <p className="cc-results-count">
             {loading ? 'Buscando prendas…' : `${prendasFiltradas.length} prenda${prendasFiltradas.length === 1 ? '' : 's'} encontrada${prendasFiltradas.length === 1 ? '' : 's'}`}
           </p>
 
           {loading ? (
-            <div style={{
-              background: palette.white,
-              border: `1px solid rgba(28,15,27,0.08)`,
-              borderRadius: '26px',
-              padding: '2.2rem',
-              textAlign: 'center',
-              color: palette.slate,
-              boxShadow: '0 12px 26px rgba(28,15,27,0.05)',
-            }}>
+            <div className="cc-state">
               Cargando prendas desde la base de datos...
             </div>
           ) : error ? (
-            <div style={{
-              background: '#fff2f2',
-              border: '1px solid #f6c1c1',
-              color: '#9d2d2d',
-              borderRadius: '22px',
-              padding: '1.2rem 1.5rem',
-            }}>
+            <div className="cc-state cc-state--error">
               {error}
             </div>
           ) : prendasFiltradas.length === 0 ? (
-            <div style={{
-              background: palette.white,
-              border: `1px solid rgba(28,15,27,0.08)`,
-              borderRadius: '26px',
-              padding: '2.5rem',
-              textAlign: 'center',
-              color: palette.slate,
-              boxShadow: '0 12px 26px rgba(28,15,27,0.05)',
-            }}>
+            <div className="cc-state">
               No hay prendas disponibles con ese filtro en este momento.
             </div>
           ) : (
-            <div style={{
-              display: 'grid',
-              gridTemplateColumns: 'repeat(auto-fit, minmax(250px, 1fr))',
-              gap: '1.5rem',
-            }}>
+            <div className="cc-product-grid">
               {prendasFiltradas.map((prenda, index) => {
                 const tag = genreStyle(prenda.genero);
                 return (
                   <article
                     key={prenda.id}
                     className="cc-card"
-                    style={{
-                      animationDelay: `${Math.min(index * 0.05, 0.4)}s`,
-                      background: palette.white,
-                      borderRadius: '28px',
-                      overflow: 'hidden',
-                      border: `1px solid rgba(28,15,27,0.08)`,
-                      boxShadow: '0 18px 34px rgba(28,15,27,0.07)',
-                    }}
+                    style={{ animationDelay: `${Math.min(index * 0.05, 0.4)}s` }}
                   >
-                    <div style={{
-                      height: '260px',
-                      background: `linear-gradient(135deg, ${palette.ivorySoft} 0%, #f2ddce 100%)`,
-                      display: 'flex',
-                      alignItems: 'center',
-                      justifyContent: 'center',
-                      overflow: 'hidden',
-                      position: 'relative',
-                    }}>
+                    <div className="cc-product-image">
                       {prenda.imagen ? (
                         <img
                           src={prenda.imagen}
                           alt={prenda.nombre}
                           className="cc-img"
-                          style={{ width: '100%', height: '100%', objectFit: 'cover' }}
                         />
                       ) : (
-                        <div style={{
-                          width: '100%',
-                          height: '100%',
-                          display: 'flex',
-                          alignItems: 'center',
-                          justifyContent: 'center',
-                          fontSize: '3rem',
-                          fontWeight: 800,
-                          color: palette.plumSoft,
-                        }}>
+                        <div className="cc-product-placeholder">
                           {String(prenda.nombre).slice(0, 2).toUpperCase()}
                         </div>
                       )}
                     </div>
 
-                    <div style={{ padding: '1.2rem 1.2rem 1.4rem' }}>
-                      <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'flex-start', gap: '0.75rem', marginBottom: '0.6rem' }}>
-                        <h3 style={{ margin: 0, fontSize: '1.2rem', fontWeight: 700, lineHeight: 1.35, color: palette.plum }}>
+                    <div className="cc-product-body">
+                      <div className="cc-product-heading">
+                        <h3>
                           {prenda.nombre}
                         </h3>
-                        <span style={{
-                          background: tag.bg,
-                          color: tag.text,
-                          borderRadius: '999px',
-                          padding: '0.35rem 0.7rem',
-                          fontSize: '0.72rem',
-                          fontWeight: 800,
-                          whiteSpace: 'nowrap',
-                        }}>
+                        <span className="cc-genre-tag" style={{ background: tag.bg, color: tag.text }}>
                           {prenda.genero}
                         </span>
                       </div>
 
-                      <p style={{
-                        margin: '0 0 0.75rem',
-                        color: palette.slate,
-                        lineHeight: 1.6,
-                        minHeight: '48px',
-                        fontSize: '0.95rem',
-                      }}>
+                      <p className="cc-product-description">
                         {prenda.descripcion}
                       </p>
 
-                      <div style={{
-                        display: 'flex',
-                        justifyContent: 'space-between',
-                        alignItems: 'center',
-                        marginBottom: '0.9rem',
-                        gap: '0.75rem',
-                      }}>
-                        <span style={{ fontSize: '1.1rem', fontWeight: 800, color: palette.plumDeep }}>
+                      <div className="cc-product-meta">
+                        <span className="cc-product-price">
                           {formatCurrency(prenda.precio)}
                         </span>
-                        <span style={{ color: palette.sageDeep, fontWeight: 700, fontSize: '0.78rem' }}>
+                        <span className="cc-product-stock">
                           {prenda.stock} disponibles
                         </span>
                       </div>
 
-                      <div style={{
-                        display: 'flex',
-                        gap: '0.6rem',
-                        alignItems: 'flex-end',
-                        justifyContent: 'space-between',
-                        width: '100%',
-                      }}>
+                      <div className="cc-product-actions">
                         <button
                           type="button"
                           onClick={() => handleAgregarCarrito(prenda, cantidades[prenda.id] ?? 1)}
                           className="cc-btn-primary"
-                          style={{
-                            flex: '1 1 auto',
-                            minWidth: '118px',
-                            height: '48px',
-                            border: 'none',
-                            borderRadius: '14px',
-                            background: `linear-gradient(135deg, ${palette.fucsia} 0%, ${palette.fucsiaDeep} 100%)`,
-                            color: '#fff',
-                            padding: '0.72rem 1rem',
-                            fontWeight: 800,
-                            cursor: 'pointer',
-                            fontSize: '0.9rem',
-                            boxShadow: '0 10px 18px rgba(230,60,134,0.25)',
-                            display: 'flex',
-                            alignItems: 'center',
-                            justifyContent: 'center',
-                          }}
                         >
                           Agregar
                         </button>
 
-                        <div style={{
-                          display: 'flex',
-                          flexDirection: 'column',
-                          justifyContent: 'flex-end',
-                          width: '98px',
-                          flexShrink: 0,
-                        }}>
-                          <label style={{
-                            fontSize: '0.68rem',
-                            fontWeight: 800,
-                            color: palette.slate,
-                            marginBottom: '0.35rem',
-                            letterSpacing: '0.04em',
-                            textTransform: 'uppercase',
-                          }}>
+                        <div className="cc-quantity-field">
+                          <label>
                             Cant.
                           </label>
                           <input
@@ -988,20 +586,6 @@ export default function CatalogoCliente({ onVolverInicio, onAgregarCarrito, onVe
                               const stock = Number(prenda.stock || 1);
                               const valor = Math.min(Math.max(1, numero), stock);
                               setCantidades((prev) => ({ ...prev, [prenda.id]: valor }));
-                            }}
-                            style={{
-                              width: '100%',
-                              height: '48px',
-                              border: `1px solid ${palette.plum}`,
-                              borderRadius: '12px',
-                              padding: '0.6rem 0.5rem',
-                              fontSize: '1rem',
-                              fontWeight: 700,
-                              color: palette.plum,
-                              textAlign: 'center',
-                              background: palette.white,
-                              outline: 'none',
-                              boxSizing: 'border-box',
                             }}
                           />
                         </div>

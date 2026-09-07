@@ -62,8 +62,6 @@ public class UsuarioService {
             usuario.setNombreUsuario(datosUsuario.getNombreUsuario());
             usuario.setApellidoUsuario(datosUsuario.getApellidoUsuario());
             usuario.setCorreo(datosUsuario.getCorreo());
-            usuario.setTelefono(datosUsuario.getTelefono());
-            usuario.setDireccion(datosUsuario.getDireccion());
             usuario.setEstado(datosUsuario.getEstado());
 
             if (datosUsuario.getContrasena() != null && !datosUsuario.getContrasena().isBlank()) {

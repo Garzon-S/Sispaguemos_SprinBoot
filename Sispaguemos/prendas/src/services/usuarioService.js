@@ -10,7 +10,10 @@ const handleResponse = async (res, defaultMessage) => {
   }
 
   if (!res.ok) {
-    throw new Error(data?.message || data || defaultMessage);
+    const serverMessage = typeof data === 'string'
+      ? data
+      : data?.message || data?.error || data?.detail;
+    throw new Error(serverMessage || defaultMessage);
   }
 
   return data;
@@ -42,24 +45,20 @@ export const registrarUsuario = async (usuario) => {
 
   if (hasImage) {
     const formData = new FormData();
-    formData.append('primerNom', usuario.primerNom || '');
-    formData.append('segundNom', usuario.segundNom || '');
-    formData.append('primerApelli', usuario.primerApelli || '');
-    formData.append('segundApelli', usuario.segundApelli || '');
+    formData.append('nombreUsuario', [usuario.primerNom, usuario.segundNom].filter(Boolean).join(' '));
+    formData.append('apellidoUsuario', [usuario.primerApelli, usuario.segundApelli].filter(Boolean).join(' '));
     formData.append('correo', usuario.correo || '');
     formData.append('contrasena', usuario.contrasena || '');
-    formData.append('estado', usuario.estado !== undefined ? usuario.estado : 1);
+    formData.append('estado', usuario.estado !== undefined ? usuario.estado : 'Activo');
     formData.append('imagenPerfil', usuario.imagenPerfil);
     body = formData;
   } else {
     const payload = {
-      primerNom: usuario.primerNom || '',
-      segundNom: usuario.segundNom || '',
-      primerApelli: usuario.primerApelli || '',
-      segundApelli: usuario.segundApelli || '',
+      nombreUsuario: [usuario.primerNom, usuario.segundNom].filter(Boolean).join(' '),
+      apellidoUsuario: [usuario.primerApelli, usuario.segundApelli].filter(Boolean).join(' '),
       correo: usuario.correo || '',
       contrasena: usuario.contrasena || '',
-      estado: usuario.estado !== undefined ? usuario.estado : 1,
+      estado: usuario.estado !== undefined ? usuario.estado : 'Activo',
     };
     body = JSON.stringify(payload);
     headers = { 'Content-Type': 'application/json' };

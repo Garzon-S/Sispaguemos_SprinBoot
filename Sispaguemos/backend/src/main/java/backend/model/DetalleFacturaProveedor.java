@@ -1,6 +1,7 @@
 package backend.model;
 
 import jakarta.persistence.*;
+import com.fasterxml.jackson.annotation.JsonIgnore;
 import java.math.BigDecimal;
 
 @Entity
@@ -14,6 +15,7 @@ public class DetalleFacturaProveedor {
 
     @ManyToOne
     @JoinColumn(name = "fk_id_factura_proveedor", nullable = false)
+    @JsonIgnore
     private FacturaProveedor facturaProveedor;
 
     @ManyToOne
@@ -34,10 +36,10 @@ public class DetalleFacturaProveedor {
 
     @Enumerated(EnumType.STRING)
     @Column(name = "estado", nullable = false)
-    private EstadoDetalle estado = EstadoDetalle.Pendiente;
+    private EstadoDetalle estado = EstadoDetalle.Recibida;
 
     public enum EstadoDetalle {
-        Pendiente, Parcial, Completo
+        Recibida, Incompleta
     }
 
     // Getters y Setters

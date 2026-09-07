@@ -28,12 +28,6 @@ public class Usuario {
     @Column(name = "correo_usuario", nullable = false, unique = true, length = 150)
     private String correo;
 
-    @Column(name = "telefono_usuario", length = 20)
-    private String telefono;
-
-    @Column(name = "direccion_usuario", length = 200)
-    private String direccion;
-
     @Column(name = "contrasena_usuario", nullable = false, length = 255)
     private String contrasena;
 
@@ -106,22 +100,6 @@ public class Usuario {
 
     public void setCorreo(String correo) {
         this.correo = correo;
-    }
-
-    public String getTelefono() {
-        return telefono;
-    }
-
-    public void setTelefono(String telefono) {
-        this.telefono = telefono;
-    }
-
-    public String getDireccion() {
-        return direccion;
-    }
-
-    public void setDireccion(String direccion) {
-        this.direccion = direccion;
     }
 
     public String getContrasena() {

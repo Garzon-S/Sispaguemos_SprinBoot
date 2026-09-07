@@ -1,6 +1,7 @@
 import React, { useState } from 'react';
 import { Link, useNavigate } from 'react-router-dom';
 import { loginUsuario, registrarUsuario } from '../services/usuarioService';
+import '../styles/IniciosesionRegistro.css';
 
 // ---------------------------------------------------------------------------
 // Misma paleta de Pague Menos: fucsia de marca + verde salvia, dorado y
@@ -70,13 +71,13 @@ const emailRegex = /^[^\s@]+@[^\s@]+\.[^\s@]+$/;
 
 function Field({ label, error, children }) {
   return (
-    <div className={error ? 'field shake' : 'field'} style={{ marginBottom: '1.25rem' }}>
-      <label style={{ display: 'block', fontSize: '0.85rem', fontWeight: '600', color: palette.ink, marginBottom: '0.4rem' }}>
+    <div className={error ? 'auth-field shake' : 'auth-field'}>
+      <label>
         {label}
       </label>
       {children}
       {error && (
-        <div style={{ color: palette.error, fontSize: '0.78rem', marginTop: '0.35rem', fontWeight: '500' }}>
+        <div className="auth-field-error">
           {error}
         </div>
       )}
@@ -91,19 +92,7 @@ function TextInput({ error, ...props }) {
       {...props}
       onFocus={(e) => { setFocused(true); props.onFocus && props.onFocus(e); }}
       onBlur={(e) => { setFocused(false); props.onBlur && props.onBlur(e); }}
-      style={{
-        width: '100%',
-        boxSizing: 'border-box',
-        padding: '0.85rem 1rem',
-        borderRadius: '14px',
-        border: `1.6px solid ${error ? palette.error : focused ? palette.fucsia : palette.sand}`,
-        fontSize: '0.95rem',
-        outline: 'none',
-        backgroundColor: focused ? '#ffffff' : palette.cream,
-        color: palette.ink,
-        boxShadow: focused ? `0 0 0 4px ${error ? 'rgba(192,57,43,0.12)' : 'rgba(230,57,130,0.12)'}` : 'none',
-        transition: 'border-color 0.2s ease, box-shadow 0.2s ease, background-color 0.2s ease',
-      }}
+      className={`auth-input${error ? ' has-error' : ''}${focused ? ' is-focused' : ''}`}
     />
   );
 }
@@ -191,7 +180,7 @@ export default function AuthPage() {
         segundApelli: reg.segundApelli.trim(),
         correo: reg.email.trim(),
         contrasena: reg.password,
-        estado: 1,
+        estado: 'Activo',
       };
 
       if (reg.imagenPerfil instanceof File) {
@@ -218,19 +207,7 @@ export default function AuthPage() {
     : { title: 'Únete a Pague Menos', desc: 'Crea tu cuenta en un minuto y guarda tus prendas favoritas, sigue tus pedidos y entérate primero de las novedades.' };
 
   return (
-    <div style={{
-      fontFamily: "'Inter', system-ui, -apple-system, sans-serif",
-      backgroundColor: palette.cream,
-      minHeight: '100vh',
-      width: '100%',
-      display: 'flex',
-      alignItems: 'center',
-      justifyContent: 'center',
-      padding: '3rem 1.5rem',
-      boxSizing: 'border-box',
-      position: 'relative',
-      overflow: 'hidden',
-    }}>
+    <div className="auth-page">
       <style>{`
         @import url('https://fonts.googleapis.com/css2?family=Fraunces:ital,wght@0,500;0,600;0,700;1,500&family=Inter:wght@400;500;600;700;800&display=swap');
         * { font-family: inherit; box-sizing: border-box; }
@@ -283,62 +260,41 @@ export default function AuthPage() {
       <div className="blob" style={{ width: '260px', height: '260px', backgroundColor: palette.gold, bottom: '-80px', right: '-60px', opacity: 0.25, animationDelay: '1.2s' }} />
       <div className="blob" style={{ width: '140px', height: '140px', backgroundColor: palette.fucsia, bottom: '10%', left: '4%', opacity: 0.15, animationDelay: '0.6s' }} />
 
-      <div className="card-in auth-grid" style={{
-        position: 'relative',
-        zIndex: 2,
-        width: '100%',
-        maxWidth: '960px',
-        display: 'grid',
-        gridTemplateColumns: '0.85fr 1.15fr',
-        backgroundColor: '#ffffff',
-        borderRadius: '32px',
-        overflow: 'hidden',
-        boxShadow: '0 30px 60px rgba(43,24,48,0.14)',
-      }}>
+      <div className="card-in auth-grid">
 
         {/* PANEL DE MARCA */}
-        <div className="brand-panel" style={{
-          backgroundColor: palette.fucsia,
-          backgroundImage: `radial-gradient(circle at 20% 15%, rgba(255,255,255,0.18) 0%, transparent 55%), radial-gradient(circle at 85% 85%, rgba(43,24,48,0.25) 0%, transparent 55%)`,
-          color: '#ffffff',
-          padding: '3rem 2.4rem',
-          display: 'flex',
-          flexDirection: 'column',
-          justifyContent: 'space-between',
-          position: 'relative',
-          overflow: 'hidden',
-        }}>
-          <Link to="/" className="link-hover" style={{ color: '#ffffff', textDecoration: 'none', fontSize: '0.85rem', fontWeight: '600', display: 'flex', alignItems: 'center', gap: '0.4rem' }}>
+        <div className="brand-panel">
+          <Link to="/" className="link-hover auth-store-link">
             ← Volver a la tienda
           </Link>
 
           <div key={mode} className="brand-in">
-            <div className="display" style={{ fontSize: '1.5rem', fontWeight: '700', marginBottom: '2rem' }}>
+            <div className="display auth-brand">
               Pague <span style={{ fontStyle: 'italic' }}>Menos</span>
             </div>
-            <h1 className="display" style={{ fontSize: '2rem', fontWeight: '600', lineHeight: '1.2', margin: '0 0 1rem 0' }}>
+            <h1 className="display auth-brand-title">
               {brandCopy.title}
             </h1>
-            <p style={{ fontSize: '0.95rem', lineHeight: '1.6', opacity: 0.92, margin: 0, maxWidth: '340px' }}>
+            <p className="auth-brand-copy">
               {brandCopy.desc}
             </p>
           </div>
 
-          <div style={{ display: 'flex', gap: '1rem' }}>
-            <div className="floating" style={{ backgroundColor: 'rgba(255,255,255,0.16)', borderRadius: '16px', padding: '0.8rem', animation: 'float 5s ease-in-out infinite' }}>
+          <div className="auth-brand-icons">
+            <div className="auth-brand-icon">
               <IconHanger />
             </div>
-            <div style={{ backgroundColor: 'rgba(255,255,255,0.16)', borderRadius: '16px', padding: '0.8rem', animation: 'float 6s ease-in-out infinite', animationDelay: '0.4s' }}>
+            <div className="auth-brand-icon">
               <IconShirt />
             </div>
-            <div style={{ backgroundColor: 'rgba(255,255,255,0.16)', borderRadius: '16px', padding: '0.8rem', animation: 'float 5.5s ease-in-out infinite', animationDelay: '0.8s' }}>
+            <div className="auth-brand-icon">
               <IconDress />
             </div>
           </div>
         </div>
 
         {/* PANEL DE FORMULARIO */}
-        <div style={{ padding: '3rem 3.2rem', display: 'flex', flexDirection: 'column', justifyContent: 'center' }}>
+        <div className="auth-form-panel">
 
           {status === 'success' ? (
             <div style={{ textAlign: 'center', padding: '2rem 0' }}>

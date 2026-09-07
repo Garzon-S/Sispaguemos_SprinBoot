@@ -1,6 +1,7 @@
 package backend.model;
 
 import java.time.LocalDateTime;
+import com.fasterxml.jackson.annotation.JsonAlias;
 import com.fasterxml.jackson.annotation.JsonProperty;
 import jakarta.persistence.Column;
 import jakarta.persistence.Entity;
@@ -17,6 +18,7 @@ public class Prenda {
     @Id
     @GeneratedValue(strategy = GenerationType.IDENTITY)
     @JsonProperty("id_prenda")
+    @JsonAlias("idPrenda")
     @Column(name = "id_prenda")
     private Integer idPrenda;
 

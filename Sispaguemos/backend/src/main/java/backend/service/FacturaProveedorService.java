@@ -23,18 +23,22 @@ public class FacturaProveedorService {
 
     @Transactional
     public FacturaProveedor registrarYRecibirFactura(FacturaProveedor factura) {
+        factura.setNumeroFactura("TEMP-" + System.nanoTime());
         if (factura.getDetalles() != null) {
             for (DetalleFacturaProveedor detalle : factura.getDetalles()) {
                 detalle.setFacturaProveedor(factura);
             }
         }
 
-        if (FacturaProveedor.EstadoFactura.Recibida.equals(factura.getEstado())) {
+        if (FacturaProveedor.EstadoFactura.Recibida.equals(factura.getEstado())
+                || FacturaProveedor.EstadoFactura.Incompleta.equals(factura.getEstado())) {
             factura.setFechaRecepcion(LocalDateTime.now());
             aplicarRestockInventario(factura);
         }
 
-        return facturaRepository.save(factura);
+        FacturaProveedor guardada = facturaRepository.saveAndFlush(factura);
+        guardada.setNumeroFactura(String.format("FAC-%06d", guardada.getIdFacturaProveedor()));
+        return facturaRepository.save(guardada);
     }
 
     @Transactional
@@ -60,86 +64,43 @@ public class FacturaProveedorService {
             int cantidadRecibida = detalle.getCantidadRecibida();
             if (cantidadRecibida <= 0) continue;
 
-            double precioCompra = detalle.getPrecioCompra() != null ? detalle.getPrecioCompra().doubleValue() : 0.0;
-            Prenda prenda = detalle.getPrenda();
-            if (prenda == null || prenda.getIdPrenda() == null) continue;
+            if (detalle.getPrenda() == null || detalle.getPrenda().getIdPrenda() == null) continue;
 
-            long idPrendaObjetivo = prenda.getIdPrenda();
+            BigDecimal precioCompra = detalle.getPrecioCompra() != null ? detalle.getPrecioCompra() : BigDecimal.ZERO;
+            Integer idPrenda = detalle.getPrenda().getIdPrenda();
 
-            // Buscamos si ya existe un registro en bodega asociado a esta prenda usando reflexión de forma segura
-            Bodega bodegaEncontrada = null;
-            for (Bodega b : bodegaRepository.findAll()) {
-                try {
-                    Object prendaObj = b.getClass().getMethod("getPrenda").invoke(b);
-                    if (prendaObj != null) {
-                        Object pId = prendaObj.getClass().getMethod("getIdPrenda").invoke(prendaObj);
-                        if (pId != null) {
-                            long idEncontrado = Long.parseLong(String.valueOf(pId));
-                            // Comparación limpia usando primitivo == para evitar errores con long
-                            if (idEncontrado == idPrendaObjetivo) {
-                                bodegaEncontrada = b;
-                                break;
-                            }
-                        }
-                    }
-                } catch (Exception ignored) {}
+            Bodega bodegaEncontrada = bodegaRepository.findByIdPrenda(idPrenda);
+            if (bodegaEncontrada == null) {
+                bodegaEncontrada = new Bodega();
+                bodegaEncontrada.setIdPrenda(idPrenda);
+                bodegaEncontrada.setStockActual(0);
+                bodegaEncontrada.setStockMinimo(5);
+                bodegaEncontrada.setStockMaximo(85);
+                bodegaEncontrada.setCostoPromedio(BigDecimal.ZERO);
             }
 
-            try {
-                if (bodegaEncontrada == null) {
-                    bodegaEncontrada = new Bodega();
-                    try { bodegaEncontrada.getClass().getMethod("setPrenda", Prenda.class).invoke(bodegaEncontrada, prenda); } catch(Exception e){}
-                    try { bodegaEncontrada.getClass().getMethod("setCantidadActual", int.class).invoke(bodegaEncontrada, 0); } catch(Exception e){
-                        try { bodegaEncontrada.getClass().getMethod("setCantidadActual", double.class).invoke(bodegaEncontrada, 0.0); } catch(Exception ex){}
-                    }
-                    try { bodegaEncontrada.getClass().getMethod("setCostoPromedio", double.class).invoke(bodegaEncontrada, precioCompra); } catch(Exception e){
-                        try { bodegaEncontrada.getClass().getMethod("setCostoPromedio", BigDecimal.class).invoke(bodegaEncontrada, BigDecimal.valueOf(precioCompra)); } catch(Exception ex){}
-                    }
-                }
-
-                // Extraemos valores actuales de stock y costo de forma segura
-                int stockAnterior = 0;
-                try {
-                    Object val = bodegaEncontrada.getClass().getMethod("getCantidadActual").invoke(bodegaEncontrada);
-                    if (val != null) stockAnterior = Integer.parseInt(String.valueOf(val));
-                } catch (Exception e) {}
-
-                double costoAnterior = 0.0;
-                try {
-                    Object val = bodegaEncontrada.getClass().getMethod("getCostoPromedio").invoke(bodegaEncontrada);
-                    if (val instanceof BigDecimal) costoAnterior = ((BigDecimal) val).doubleValue();
-                    else if (val != null) costoAnterior = Double.parseDouble(String.valueOf(val));
-                } catch (Exception e) {}
-
-                int stockNuevo = stockAnterior + cantidadRecibida;
-                double nuevoCostoPromedio = stockNuevo > 0 
-                    ? ((stockAnterior * costoAnterior) + (cantidadRecibida * precioCompra)) / stockNuevo 
+            int stockAnterior = bodegaEncontrada.getStockActual() != null ? bodegaEncontrada.getStockActual() : 0;
+            BigDecimal costoAnterior = bodegaEncontrada.getCostoPromedio() != null ? bodegaEncontrada.getCostoPromedio() : BigDecimal.ZERO;
+            int stockNuevo = stockAnterior + cantidadRecibida;
+            BigDecimal costoPromedioNuevo = stockNuevo > 0
+                    ? ((costoAnterior.multiply(BigDecimal.valueOf(stockAnterior)))
+                        .add(precioCompra.multiply(BigDecimal.valueOf(cantidadRecibida))))
+                        .divide(BigDecimal.valueOf(stockNuevo), 2, java.math.RoundingMode.HALF_UP)
                     : precioCompra;
 
-                // Actualizamos la bodega
-                try { bodegaEncontrada.getClass().getMethod("setCantidadActual", int.class).invoke(bodegaEncontrada, stockNuevo); } catch(Exception e){}
-                try { bodegaEncontrada.getClass().getMethod("setCostoPromedio", double.class).invoke(bodegaEncontrada, nuevoCostoPromedio); } catch(Exception e){
-                    try { bodegaEncontrada.getClass().getMethod("setCostoPromedio", BigDecimal.class).invoke(bodegaEncontrada, BigDecimal.valueOf(nuevoCostoPromedio)); } catch(Exception ex){}
-                }
-                
-                try { bodegaEncontrada.getClass().getMethod("setFechaActualizacion", LocalDateTime.class).invoke(bodegaEncontrada, LocalDateTime.now()); } catch(Exception ignored){}
+            bodegaEncontrada.setStockActual(stockNuevo);
+            bodegaEncontrada.setCostoPromedio(costoPromedioNuevo);
+            bodegaEncontrada.setFechaActualizacion(LocalDateTime.now());
+            Bodega bodegaGuardada = bodegaRepository.saveAndFlush(bodegaEncontrada);
 
-                bodegaRepository.save(bodegaEncontrada);
-
-                // Registramos el movimiento en el Kardex
-                MovimientoInventario movimiento = new MovimientoInventario();
-                try { movimiento.getClass().getMethod("setStock", Bodega.class).invoke(movimiento, bodegaEncontrada); } catch(Exception e){
-                    try { movimiento.getClass().getMethod("setBodega", Bodega.class).invoke(movimiento, bodegaEncontrada); } catch(Exception ex){}
-                }
-                try { movimiento.getClass().getMethod("setCantidad", int.class).invoke(movimiento, cantidadRecibida); } catch(Exception e){}
-                try { movimiento.getClass().getMethod("setTipoMovimiento", MovimientoInventario.TipoMovimiento.class).invoke(movimiento, MovimientoInventario.TipoMovimiento.Entrada); } catch(Exception e){}
-                try { movimiento.getClass().getMethod("setObservacion", String.class).invoke(movimiento, "Restock Factura Proveedor #" + factura.getNumeroFactura()); } catch(Exception e){}
-                try { movimiento.getClass().getMethod("setFechaMovimiento", LocalDateTime.class).invoke(movimiento, LocalDateTime.now()); } catch(Exception e){}
-                try { movimiento.getClass().getMethod("setUsuario", Usuario.class).invoke(movimiento, factura.getUsuario()); } catch(Exception ignored){}
-
-                movimientoRepository.save(movimiento);
-
-            } catch (Exception ignored) {}
+            MovimientoInventario movimiento = new MovimientoInventario();
+            movimiento.setTipoMovimiento(MovimientoInventario.TipoMovimiento.Entrada);
+            movimiento.setCantidad(cantidadRecibida);
+            movimiento.setFechaMovimiento(LocalDateTime.now());
+            movimiento.setObservacion("Restock Factura Proveedor #" + factura.getNumeroFactura());
+            movimiento.setFkIdStock(bodegaGuardada.getIdBodega());
+            movimiento.setFkIdUsuario(factura.getUsuario() != null ? factura.getUsuario().getId() : null);
+            movimientoRepository.save(movimiento);
         }
     }
 }

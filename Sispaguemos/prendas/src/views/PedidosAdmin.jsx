@@ -3,10 +3,10 @@ import { useNavigate } from 'react-router-dom';
 import axios from 'axios';
 import '../styles/Admin.css';
 
-const ESTADOS = ['Pendiente', 'Listo en tienda', 'Cancelado'];
+const ESTADOS = ['Pendiente', 'Listo para recoger en tienda', 'Cancelado'];
 
 const estiloEstado = (estado) => {
-  if (estado === 'Listo en tienda') return { backgroundColor: '#e4f3e5', borderColor: '#70ad75', color: '#27602c' };
+  if (estado === 'Listo para recoger en tienda') return { backgroundColor: '#e4f3e5', borderColor: '#70ad75', color: '#27602c' };
   if (estado === 'Cancelado') return { backgroundColor: '#fcebea', borderColor: '#d16b5d', color: '#8d2d22' };
   return { backgroundColor: '#fff1c9', borderColor: '#e0ad35', color: '#805b0b' };
 };
@@ -54,7 +54,7 @@ export default function PedidosAdmin() {
   const nombreCliente = (idUsuario) => {
     const usuario = usuarios.find((item) => (item.id || item.idUsuario || item.id_usuario) === idUsuario);
     if (!usuario) return `Usuario #${idUsuario}`;
-    return `${usuario.primerNom || ''} ${usuario.primerApelli || ''}`.trim() || usuario.correo;
+    return `${usuario.nombreUsuario || usuario.nombre_usuario || ''} ${usuario.apellidoUsuario || usuario.apellido_usuario || ''}`.trim() || usuario.correo;
   };
 
   const cambiarEstado = async (idPedido, estado) => {

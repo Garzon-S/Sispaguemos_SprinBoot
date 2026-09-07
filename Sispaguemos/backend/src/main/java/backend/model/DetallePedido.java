@@ -13,7 +13,7 @@ public class DetallePedido {
 
     @Id
     @GeneratedValue(strategy = GenerationType.IDENTITY)
-    @Column(name = "id_detalle")
+    @Column(name = "id_detalle_pedido")
     private Long idDetalle;
 
     @Column(name = "fk_id_pedido", nullable = false)
@@ -28,7 +28,7 @@ public class DetallePedido {
     @Column(name = "precio_unitario", nullable = false)
     private Double precioUnitario;
 
-    @Column(name = "subtotal", nullable = false)
+    @Column(name = "subtotal", insertable = false, updatable = false)
     private Double subtotal;
 
     public Long getIdDetalle() { return idDetalle; }
