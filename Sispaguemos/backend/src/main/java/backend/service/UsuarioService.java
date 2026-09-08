@@ -45,12 +45,14 @@ public class UsuarioService {
             usuario.setCorreo(usuario.getCorreo().trim().toLowerCase());
         }
 
-        // Si no viene un rol asignado desde el frontend, asigna "Cliente" por defecto
+        // El registro público siempre usa el rol Cliente configurado en la base de datos.
         if (usuario.getFkIdRol() == null) {
             Rol rolCliente = rolRepository.findByNomRol("Cliente")
                     .orElseGet(() -> rolRepository.findById(ID_ROL_CLIENTE_DEFAULT).orElse(null));
             if (rolCliente != null) {
                 usuario.setFkIdRol(rolCliente.getIdRol());
+            } else {
+                throw new IllegalStateException("No existe el rol Cliente en la base de datos");
             }
         }
 
@@ -63,10 +65,6 @@ public class UsuarioService {
             usuario.setApellidoUsuario(datosUsuario.getApellidoUsuario());
             usuario.setCorreo(datosUsuario.getCorreo());
             usuario.setEstado(datosUsuario.getEstado());
-
-            if (datosUsuario.getContrasena() != null && !datosUsuario.getContrasena().isBlank()) {
-                usuario.setContrasena(datosUsuario.getContrasena());
-            }
             return usuarioRepository.save(usuario);
         }).orElseThrow(() -> new RuntimeException("Usuario no encontrado con ID: " + id));
     }

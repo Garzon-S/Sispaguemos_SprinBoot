@@ -17,12 +17,12 @@ public class Rol {
     private String nomRol;
 
     @Column(name = "estado", nullable = false)
-    private Integer estado;
+    private String estado;
 
     public Rol() {
     }
 
-    public Rol(Integer idRol, String nomRol, Integer estado) {
+    public Rol(Integer idRol, String nomRol, String estado) {
         this.idRol = idRol;
         this.nomRol = nomRol;
         this.estado = estado;
@@ -44,11 +44,11 @@ public class Rol {
         this.nomRol = nomRol;
     }
 
-    public Integer getEstado() {
+    public String getEstado() {
         return estado;
     }
 
-    public void setEstado(Integer estado) {
+    public void setEstado(String estado) {
         this.estado = estado;
     }
 }

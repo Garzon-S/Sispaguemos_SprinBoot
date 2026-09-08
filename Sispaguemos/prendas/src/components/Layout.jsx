@@ -50,7 +50,6 @@ function Layout() {
               Proveedores
             </Link>
           )}
-
           {/* MÓDULO DE VENTAS: Exclusivo para Empleados */}
           {!esAdmin && (
             <Link to="/ventas" className={`nav-item ${isActive('/ventas') ? 'active' : ''}`}>

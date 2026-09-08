@@ -119,6 +119,9 @@ export default function Facturacion() {
       fk_id_usuario: idUsuario,
       detalles: carrito.map((item) => ({
         fk_id_prenda: item.id,
+        talla: item.talla || null,
+        tipo_talla: item.tipoTalla || null,
+        id_talla: item.idTalla || null,
         cantidad: Number(item.cantidad || 0),
         precio_unitario: Number(item.precio || 0),
         subtotal: Number(item.precio || 0) * Number(item.cantidad || 0),
@@ -147,7 +150,7 @@ export default function Facturacion() {
       const compra = {
         id: pedido.idPedido || `PAYPAL-${detalles.id || Date.now()}`,
         total,
-        metodoPago: 'PayPal Sandbox',
+        metodoPago: 'PayPal',
         fecha: pedido.fechaPedido || new Date().toISOString(),
         estado: pedido.estado || 'Pendiente',
         items: carrito,
@@ -268,8 +271,11 @@ export default function Facturacion() {
               <>
                 <div className="fc-summary-list">
                   {carrito.map((item) => (
-                    <div key={item.id} className="fc-item-row">
-                      <span><strong>{item.cantidad}x</strong> {item.nombre}</span>
+                    <div key={`${item.id}::${item.talla || 'sin-talla'}`} className="fc-item-row">
+                      <span>
+                        <strong>{item.cantidad}x</strong> {item.nombre}
+                        <small className="fc-item-size">Talla: {item.talla || 'No especificada'}</small>
+                      </span>
                       <strong>{formatCurrency(Number(item.precio || 0) * Number(item.cantidad || 0))}</strong>
                     </div>
                   ))}
@@ -300,11 +306,11 @@ export default function Facturacion() {
                 onChange={(event) => { setMetodoPago(event.target.value); setPagoPreparado(false); }}
                 className="fc-select"
               >
-                <option value="paypal-sandbox">PayPal Sandbox</option>
+                <option value="paypal-sandbox">PayPal</option>
               </select>
               {!pagoPreparado && estadoPago !== 'success' && (
                 <button type="button" className="fc-btn-secondary fc-btn-block fc-btn-spaced" onClick={() => setPagoPreparado(true)}>
-                  Continuar con PayPal Sandbox
+                  Continuar con PayPal 
                 </button>
               )}
               {pagoPreparado && estadoPago !== 'success' && (
@@ -320,23 +326,23 @@ export default function Facturacion() {
                         onApprove={aprobarPagoPayPal}
                         onCancel={() => setEstadoPago('cancelled')}
                         onError={(paypalError) => {
-                          console.error('Error en PayPal Sandbox:', paypalError);
+                          console.error('Error en PayPal:', paypalError);
                           setEstadoPago('error');
                         }}
                       />
                     </PayPalScriptProvider>
                     {estadoPago === 'cancelled' && <p role="status" className="fc-payment-message">Pago cancelado. Puedes intentarlo nuevamente.</p>}
-                    {estadoPago === 'error' && <p role="alert" className="fc-payment-error">No se pudo procesar el pago en PayPal Sandbox.</p>}
+                    {estadoPago === 'error' && <p role="alert" className="fc-payment-error">No se pudo procesar el pago en PayPal.</p>}
                   </div>
                 ) : (
                   <p role="alert" className="fc-payment-error">
-                    Configura <strong>VITE_PAYPAL_CLIENT_ID</strong> en el archivo `.env` para activar PayPal Sandbox.
+                    Configura <strong>VITE_PAYPAL_CLIENT_ID</strong> en el archivo `.env` para activar PayPal.
                   </p>
                 )
               )}
               {estadoPago === 'success' && (
                 <div role="status" className="fc-payment-success">
-                  Pago aprobado correctamente en PayPal Sandbox.
+                    Pago aprobado correctamente en PayPal.
                 </div>
               )}
             </div>

@@ -12,11 +12,14 @@ import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
 import java.util.Optional;
+import java.util.regex.Pattern;
 
 @RestController
 @RequestMapping("/api/usuarios")
 @CrossOrigin(origins = "*")
 public class UsuarioController {
+
+    private static final Pattern NOMBRE_VALIDO = Pattern.compile("^[\\p{L}]+(?:[ '\u2019-][\\p{L}]+)*$");
 
     @Autowired
     private UsuarioService usuarioService;
@@ -97,6 +100,9 @@ public class UsuarioController {
         if (nombreUsuario == null || apellidoUsuario == null || correo == null || contrasena == null) {
             return ResponseEntity.badRequest().body("Faltan datos para registrar el usuario");
         }
+        if (!nombreValido(nombreUsuario) || !nombreValido(apellidoUsuario)) {
+            return ResponseEntity.badRequest().body("Nombres y apellidos solo pueden contener letras");
+        }
 
         if (usuarioService.obtenerPorCorreo(correo).isPresent()) {
             return ResponseEntity.status(409).body("El correo ya está registrado");
@@ -108,7 +114,6 @@ public class UsuarioController {
         usuario.setCorreo(correo.trim().toLowerCase());
         usuario.setContrasena(contrasena);
         usuario.setEstado(payload.getOrDefault("estado", "Activo"));
-        usuario.setFkIdRol(Integer.parseInt(payload.getOrDefault("fkIdRol", "3")));
 
         Usuario usuarioGuardado = usuarioService.guardarUsuario(usuario);
         return ResponseEntity.ok(crearRespuestaUsuario(usuarioGuardado));
@@ -127,6 +132,9 @@ public class UsuarioController {
             if (nombreUsuario == null || apellidoUsuario == null || correo == null || contrasena == null) {
                 return ResponseEntity.badRequest().body("Faltan datos para registrar el usuario");
             }
+            if (!nombreValido(nombreUsuario) || !nombreValido(apellidoUsuario)) {
+                return ResponseEntity.badRequest().body("Nombres y apellidos solo pueden contener letras");
+            }
 
             if (usuarioService.obtenerPorCorreo(correo).isPresent()) {
                 return ResponseEntity.status(409).body("El correo ya está registrado");
@@ -138,7 +146,6 @@ public class UsuarioController {
             usuario.setCorreo(correo.trim().toLowerCase());
             usuario.setContrasena(contrasena);
             usuario.setEstado(estado);
-            usuario.setFkIdRol(Integer.parseInt(fkIdRolStr));
 
             if (imagenPerfil != null && !imagenPerfil.isEmpty()) {
                 usuario.setImagenPerfil(imagenPerfil.getBytes());
@@ -149,6 +156,10 @@ public class UsuarioController {
         } catch (Exception e) {
             return ResponseEntity.badRequest().body("Error al guardar el usuario: " + e.getMessage());
         }
+    }
+
+    private boolean nombreValido(String valor) {
+        return valor != null && NOMBRE_VALIDO.matcher(valor.trim()).matches();
     }
 
     @PostMapping
@@ -195,7 +206,6 @@ public class UsuarioController {
             @RequestParam("nombreUsuario") String nombreUsuario,
             @RequestParam("apellidoUsuario") String apellidoUsuario,
             @RequestParam("correo") String correo,
-            @RequestParam(value = "contrasena", required = false) String contrasena,
             @RequestParam("estado") String estado,
             @RequestParam(value = "imagenPerfil", required = false) MultipartFile imagenPerfil) {
         try {
@@ -205,9 +215,6 @@ public class UsuarioController {
             usuarioExistente.setNombreUsuario(nombreUsuario);
             usuarioExistente.setApellidoUsuario(apellidoUsuario);
             usuarioExistente.setCorreo(correo);
-            if (contrasena != null && !contrasena.isBlank()) {
-                usuarioExistente.setContrasena(contrasena);
-            }
             usuarioExistente.setEstado(estado);
 
             if (imagenPerfil != null && !imagenPerfil.isEmpty()) {

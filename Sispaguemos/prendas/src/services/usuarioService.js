@@ -2,7 +2,7 @@ const API_URL = 'http://localhost:8080/api/usuarios';
 
 const handleResponse = async (res, defaultMessage) => {
   const text = await res.text();
-  let data = null;
+  let data;
   try {
     data = text ? JSON.parse(text) : null;
   } catch {
@@ -64,11 +64,16 @@ export const registrarUsuario = async (usuario) => {
     headers = { 'Content-Type': 'application/json' };
   }
 
-  const res = await fetch(`${API_URL}/register`, {
-    method: 'POST',
-    headers,
-    body,
-  });
+  let res;
+  try {
+    res = await fetch(`${API_URL}/register`, {
+      method: 'POST',
+      headers,
+      body,
+    });
+  } catch {
+    throw new Error('No se pudo conectar con el servidor. Inicia el backend en el puerto 8080.');
+  }
 
   return handleResponse(res, 'Error al crear el usuario');
 };

@@ -1,4 +1,4 @@
-import React, { useState } from 'react';
+import { useState } from 'react';
 import { Link, useNavigate } from 'react-router-dom';
 import { loginUsuario, registrarUsuario } from '../services/usuarioService';
 import '../styles/IniciosesionRegistro.css';
@@ -68,6 +68,28 @@ function IconCheck() {
 }
 
 const emailRegex = /^[^\s@]+@[^\s@]+\.[^\s@]+$/;
+const nameRegex = /^[\p{L}]+(?:[ '\u2019-][\p{L}]+)*$/u;
+
+function normalizeName(value) {
+  return value.replace(/[^\p{L} '\u2019-]/gu, '').replace(/\s{2,}/g, ' ');
+}
+
+function getPasswordSecurity(password) {
+  if (!password) return { score: 0, label: 'Sin evaluar', color: palette.sand };
+
+  let score = 0;
+  if (password.length >= 6) score += 1;
+  if (password.length >= 10) score += 1;
+  if (/[a-z]/.test(password) && /[A-Z]/.test(password)) score += 1;
+  if (/\d/.test(password)) score += 1;
+  if (/[^A-Za-z\d]/.test(password)) score += 1;
+
+  if (score <= 1) return { score, label: 'Muy débil', color: '#c0392b' };
+  if (score === 2) return { score, label: 'Débil', color: '#d9822b' };
+  if (score === 3) return { score, label: 'Media', color: palette.gold };
+  if (score === 4) return { score, label: 'Fuerte', color: palette.sage };
+  return { score, label: 'Muy fuerte', color: '#3d7a50' };
+}
 
 function Field({ label, error, children }) {
   return (
@@ -120,6 +142,7 @@ export default function AuthPage() {
   const [regErrors, setRegErrors] = useState({});
   const [showRegPw, setShowRegPw] = useState(false);
   const [previewImagen, setPreviewImagen] = useState('');
+  const passwordSecurity = getPasswordSecurity(reg.password);
 
   function switchMode(next) {
     if (next === mode) return;
@@ -163,7 +186,11 @@ export default function AuthPage() {
     e.preventDefault();
     const errs = {};
     if (reg.primerNom.trim().length < 2) errs.primerNom = 'Ingresa tu primer nombre.';
+    else if (!nameRegex.test(reg.primerNom.trim())) errs.primerNom = 'Solo se permiten letras.';
+    if (reg.segundNom.trim() && !nameRegex.test(reg.segundNom.trim())) errs.segundNom = 'Solo se permiten letras.';
     if (reg.primerApelli.trim().length < 2) errs.primerApelli = 'Ingresa tu primer apellido.';
+    else if (!nameRegex.test(reg.primerApelli.trim())) errs.primerApelli = 'Solo se permiten letras.';
+    if (reg.segundApelli.trim() && !nameRegex.test(reg.segundApelli.trim())) errs.segundApelli = 'Solo se permiten letras.';
     if (!emailRegex.test(reg.email)) errs.email = 'Ingresa un correo válido.';
     if (reg.password.length < 6) errs.password = 'La contraseña debe tener al menos 6 caracteres.';
     if (reg.confirm !== reg.password) errs.confirm = 'Las contraseñas no coinciden.';
@@ -197,7 +224,7 @@ export default function AuthPage() {
       const destino = (rol === 'administrador' || rol === 'vendedor' || rol === 'empleado') ? '/dashboard' : '/';
       setTimeout(() => navigate(destino), 900);
     } catch (error) {
-      setRegErrors({ email: error.message || 'No se pudo crear la cuenta.' });
+      setRegErrors({ form: error.message || 'No se pudo crear la cuenta.' });
       setStatus('idle');
     }
   }
@@ -427,7 +454,7 @@ export default function AuthPage() {
                         placeholder="Tu primer nombre"
                         value={reg.primerNom}
                         error={regErrors.primerNom}
-                        onChange={(e) => setReg({ ...reg, primerNom: e.target.value })}
+                        onChange={(e) => setReg({ ...reg, primerNom: normalizeName(e.target.value) })}
                       />
                     </Field>
 
@@ -437,7 +464,7 @@ export default function AuthPage() {
                         placeholder="Opcional"
                         value={reg.segundNom}
                         error={regErrors.segundNom}
-                        onChange={(e) => setReg({ ...reg, segundNom: e.target.value })}
+                        onChange={(e) => setReg({ ...reg, segundNom: normalizeName(e.target.value) })}
                       />
                     </Field>
                   </div>
@@ -449,7 +476,7 @@ export default function AuthPage() {
                         placeholder="Tu primer apellido"
                         value={reg.primerApelli}
                         error={regErrors.primerApelli}
-                        onChange={(e) => setReg({ ...reg, primerApelli: e.target.value })}
+                        onChange={(e) => setReg({ ...reg, primerApelli: normalizeName(e.target.value) })}
                       />
                     </Field>
 
@@ -459,7 +486,7 @@ export default function AuthPage() {
                         placeholder="Opcional"
                         value={reg.segundApelli}
                         error={regErrors.segundApelli}
-                        onChange={(e) => setReg({ ...reg, segundApelli: e.target.value })}
+                        onChange={(e) => setReg({ ...reg, segundApelli: normalizeName(e.target.value) })}
                       />
                     </Field>
                   </div>
@@ -473,6 +500,12 @@ export default function AuthPage() {
                       onChange={(e) => setReg({ ...reg, email: e.target.value })}
                     />
                   </Field>
+
+                  {regErrors.form && (
+                    <div className="auth-field-error" role="alert" style={{ marginBottom: '1rem' }}>
+                      {regErrors.form}
+                    </div>
+                  )}
 
                   <Field label="Contraseña" error={regErrors.password}>
                     <div style={{ position: 'relative' }}>
@@ -491,6 +524,25 @@ export default function AuthPage() {
                       >
                         <IconEye open={showRegPw} />
                       </button>
+                    </div>
+                    <div style={{ marginTop: '0.55rem' }} aria-live="polite">
+                      <div style={{ display: 'flex', gap: '0.25rem', height: '5px' }}>
+                        {[1, 2, 3, 4, 5].map((level) => (
+                          <span
+                            key={level}
+                            style={{
+                              flex: 1,
+                              borderRadius: '999px',
+                              backgroundColor: level <= passwordSecurity.score ? passwordSecurity.color : palette.sand,
+                              transition: 'background-color 0.2s ease',
+                            }}
+                          />
+                        ))}
+                      </div>
+                      <div style={{ display: 'flex', justifyContent: 'space-between', marginTop: '0.35rem', color: passwordSecurity.color, fontSize: '0.76rem', fontWeight: '700' }}>
+                        <span>Seguridad: {passwordSecurity.label}</span>
+                        <span>{reg.password.length}/6 mínimo</span>
+                      </div>
                     </div>
                   </Field>
 

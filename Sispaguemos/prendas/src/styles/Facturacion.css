@@ -236,6 +236,13 @@
   background: #F6E9DE;
 }
 
+.fc-item-size {
+  display: block;
+  margin-top: 0.2rem;
+  color: #6B5768;
+  font-size: 0.78rem;
+}
+
 .fc-summary-row {
   display: flex;
   justify-content: space-between;

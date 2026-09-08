@@ -1,6 +1,6 @@
 // pages/DashboardAdmin.jsx
+import { Fragment, useEffect, useState } from 'react';
 import { Link } from 'react-router-dom';
-import { useEffect, useState } from 'react';
 import axios from 'axios';
 import '../styles/Admin.css';
 
@@ -16,6 +16,7 @@ function DashboardAdmin() {
   const [cargandoPedidos, setCargandoPedidos] = useState(true);
   const [errorPedidos, setErrorPedidos] = useState('');
   const [actualizandoPedido, setActualizandoPedido] = useState(null);
+  const [pedidoExpandido, setPedidoExpandido] = useState(null);
 
   useEffect(() => {
     Promise.all([
@@ -204,6 +205,7 @@ function DashboardAdmin() {
                 <tr>
                   <th>Pedido</th>
                   <th>Cliente</th>
+                  <th>Artículos</th>
                   <th>Monto</th>
                   <th>Fecha y hora</th>
                   <th>Método de pago</th>
@@ -211,29 +213,60 @@ function DashboardAdmin() {
                 </tr>
               </thead>
               <tbody>
-                {pedidos.map((pedido) => (
-                  <tr key={pedido.idPedido}>
-                    <td>#{pedido.idPedido}</td>
-                    <td>{obtenerNombreCliente(pedido.fkIdUsuarioCliente)}</td>
-                    <td className="order-amount">{formatearMoneda(pedido.totalEstimado)}</td>
-                    <td>{formatearFecha(pedido.fechaPedido)}</td>
-                    <td>{pedido.metodoPago || 'PayPal Sandbox'}</td>
-                    <td>
-                      <select
-                        value={pedido.estado || 'Pendiente'}
-                        disabled={actualizandoPedido === pedido.idPedido}
-                        onChange={(event) => actualizarEstadoPedido(pedido.idPedido, event.target.value)}
-                        className={`order-status order-status-${String(pedido.estado || 'Pendiente').toLowerCase().replaceAll(' ', '-')}`}
-                        style={estiloEstado(pedido.estado || 'Pendiente')}
-                        aria-label={`Estado del pedido ${pedido.idPedido}`}
-                      >
-                        <option className="order-option-pendiente">Pendiente</option>
-                        <option className="order-option-listo">Listo en tienda</option>
-                        <option className="order-option-cancelado">Cancelado</option>
-                      </select>
-                    </td>
-                  </tr>
-                ))}
+                {pedidos.map((pedido) => {
+                  const expandido = pedidoExpandido === pedido.idPedido;
+                  const cantidadArticulos = pedido.cantidadPrendas
+                    || (pedido.detalles || []).reduce((total, detalle) => total + Number(detalle.cantidad || 0), 0);
+
+                  return (
+                    <Fragment key={pedido.idPedido}>
+                      <tr key={pedido.idPedido}>
+                        <td>#{pedido.idPedido}</td>
+                        <td>{obtenerNombreCliente(pedido.fkIdUsuarioCliente)}</td>
+                        <td>
+                          <button
+                            type="button"
+                            onClick={() => setPedidoExpandido(expandido ? null : pedido.idPedido)}
+                            style={{ border: 'none', background: 'transparent', color: '#2368d8', fontWeight: '800', cursor: 'pointer', padding: 0 }}
+                          >
+                            {cantidadArticulos} artículo{cantidadArticulos === 1 ? '' : 's'}
+                          </button>
+                        </td>
+                        <td className="order-amount">{formatearMoneda(pedido.totalEstimado)}</td>
+                        <td>{formatearFecha(pedido.fechaPedido)}</td>
+                        <td>{pedido.metodoPago || 'PayPal'}</td>
+                        <td>
+                          <select
+                            value={pedido.estado || 'Pendiente'}
+                            disabled={actualizandoPedido === pedido.idPedido}
+                            onChange={(event) => actualizarEstadoPedido(pedido.idPedido, event.target.value)}
+                            className={`order-status order-status-${String(pedido.estado || 'Pendiente').toLowerCase().replaceAll(' ', '-')}`}
+                            style={estiloEstado(pedido.estado || 'Pendiente')}
+                            aria-label={`Estado del pedido ${pedido.idPedido}`}
+                          >
+                            <option className="order-option-pendiente">Pendiente</option>
+                            <option className="order-option-listo">Listo en tienda</option>
+                            <option className="order-option-cancelado">Cancelado</option>
+                          </select>
+                        </td>
+                      </tr>
+                      {expandido && (
+                        <tr key={`${pedido.idPedido}-detalles`}>
+                          <td colSpan="7" style={{ background: '#fff8fb', padding: '1rem' }}>
+                            <strong style={{ display: 'block', marginBottom: '0.6rem', color: '#2368d8' }}>Detalle de prendas</strong>
+                            {pedido.detalles?.length ? pedido.detalles.map((detalle) => (
+                              <div key={detalle.idDetalle} style={{ color: '#2368d8', marginBottom: '0.35rem' }}>
+                                {detalle.cantidad}x {detalle.nombrePrenda} ({detalle.talla || 'Talla no especificada'}) · {formatearMoneda(detalle.subtotal ?? detalle.precioUnitario * detalle.cantidad)}
+                              </div>
+                            )) : (
+                              <span style={{ color: '#6B5768' }}>No hay detalle de prendas disponible para este pedido.</span>
+                            )}
+                          </td>
+                        </tr>
+                      )}
+                    </Fragment>
+                  );
+                })}
               </tbody>
             </table>
           </div>

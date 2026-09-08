@@ -158,7 +158,6 @@ public class PrendaController {
         return ResponseEntity.ok(prendaGuardada);
     }
 
-    // Endpoints corregidos con la ruta base /api/prendas/...
     @GetMapping("/hombre/prenda/{idPrenda}")
     public ResponseEntity<List<Hombre>> obtenerTallasHombrePorPrenda(@PathVariable Integer idPrenda) {
         return ResponseEntity.ok(hombreRepository.findByFkIdPrenda(idPrenda));

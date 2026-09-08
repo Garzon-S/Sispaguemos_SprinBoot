@@ -38,7 +38,16 @@ export default function UsuariosPage() {
   const [editandoId, setEditandoId] = useState(null);
 
   useEffect(() => {
-    cargarUsuarios();
+    const cargarUsuariosIniciales = async () => {
+      try {
+        const data = await obtenerUsuarios();
+        setUsuarios(Array.isArray(data) ? data : []);
+      } catch (error) {
+        console.error('Error al obtener usuarios:', error);
+      }
+    };
+
+    cargarUsuariosIniciales();
   }, []);
 
   const cargarUsuarios = async () => {
@@ -130,7 +139,7 @@ export default function UsuariosPage() {
       dataToSend.append('apellidoUsuario', formData.primerApelli.trim());
       dataToSend.append('correo', formData.correo.trim());
 
-      if (formData.contrasena && formData.contrasena.trim()) {
+      if (!editandoId && formData.contrasena && formData.contrasena.trim()) {
         dataToSend.append('contrasena', formData.contrasena);
       }
 
@@ -303,21 +312,23 @@ export default function UsuariosPage() {
             <input type="email" name="correo" maxLength="150" value={formData.correo} onChange={handleChange} required style={inputStyle} />
           </div>
 
-          <div>
-            <label style={{ display: 'block', fontSize: '0.78rem', fontWeight: '700', color: palette.plum, marginBottom: '0.45rem', letterSpacing: '0.08em', textTransform: 'uppercase' }}>
-              {editandoId ? 'Nueva Contraseña' : 'Contraseña *'}
-            </label>
-            <input
-              type="password"
-              name="contrasena"
-              maxLength="255"
-              value={formData.contrasena}
-              onChange={handleChange}
-              required={!editandoId}
-              placeholder={editandoId ? 'Dejar en blanco para conservar la actual' : 'Ingresa la contraseña'}
-              style={inputStyle}
-            />
-          </div>
+          {!editandoId && (
+            <div>
+              <label style={{ display: 'block', fontSize: '0.78rem', fontWeight: '700', color: palette.plum, marginBottom: '0.45rem', letterSpacing: '0.08em', textTransform: 'uppercase' }}>
+                Contraseña *
+              </label>
+              <input
+                type="password"
+                name="contrasena"
+                maxLength="255"
+                value={formData.contrasena}
+                onChange={handleChange}
+                required
+                placeholder="Ingresa la contraseña"
+                style={inputStyle}
+              />
+            </div>
+          )}
 
           <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: '1rem' }}>
             <div>

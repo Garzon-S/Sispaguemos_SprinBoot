@@ -75,9 +75,18 @@ export default function Compras() {
           ...(detallesLocales.get(String(pedido.idPedido)) || {}),
           id: pedido.idPedido,
           total: pedido.totalEstimado,
-          metodoPago: pedido.metodoPago || detallesLocales.get(String(pedido.idPedido))?.metodoPago || 'PayPal Sandbox',
+          metodoPago: pedido.metodoPago || detallesLocales.get(String(pedido.idPedido))?.metodoPago || 'PayPal',
           fecha: pedido.fechaPedido,
           estado: pedido.estado,
+          items: Array.isArray(pedido.detalles) && pedido.detalles.length > 0
+            ? pedido.detalles.map((detalle) => ({
+              id: detalle.fkIdPrenda,
+              nombre: detalle.nombrePrenda,
+              talla: detalle.talla,
+              cantidad: detalle.cantidad,
+              precio: detalle.precioUnitario,
+            }))
+            : detallesLocales.get(String(pedido.idPedido))?.items || [],
         })));
       })
       .catch(() => setCompras(comprasGuardadas))
@@ -257,7 +266,7 @@ export default function Compras() {
                       </div>
                       <div>
                         <span style={labelStyle}>Método de pago</span>
-                        <strong style={{ color: palette.fucsiaDeep }}>{compra.metodoPago || 'PayPal Sandbox'}</strong>
+                        <strong style={{ color: palette.fucsiaDeep }}>{compra.metodoPago || 'PayPal'}</strong>
                       </div>
                       <div>
                         <span style={labelStyle}>Monto total</span>
@@ -292,8 +301,11 @@ export default function Compras() {
                           <p style={{ margin: 0, color: palette.slate, fontSize: '0.9rem' }}>No hay detalle de prendas para esta compra.</p>
                         ) : (
                           items.map((item) => (
-                            <div key={`${id}-${item.id}`} className="cm-item-row" style={{ display: 'flex', justifyContent: 'space-between', gap: '1rem', background: palette.ivorySoft, borderRadius: '10px', padding: '0.7rem 0.8rem' }}>
-                              <span><strong>{item.cantidad}x</strong> {item.nombre}</span>
+                            <div key={`${id}-${item.id}-${item.talla || 'sin-talla'}`} className="cm-item-row" style={{ display: 'flex', justifyContent: 'space-between', gap: '1rem', background: palette.ivorySoft, borderRadius: '10px', padding: '0.7rem 0.8rem' }}>
+                              <span>
+                                <strong>{item.cantidad}x</strong> {item.nombre}
+                                <small style={{ display: 'block', marginTop: '0.2rem', color: palette.slate }}>Talla: {item.talla || 'No registrada'}</small>
+                              </span>
                               <strong>{formatCurrency(Number(item.precio || 0) * Number(item.cantidad || 0))}</strong>
                             </div>
                           ))

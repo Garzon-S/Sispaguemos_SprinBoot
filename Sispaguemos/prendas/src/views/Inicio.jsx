@@ -1,5 +1,6 @@
 import React, { useState, useRef, useEffect } from 'react';
 import { Link, useNavigate } from 'react-router-dom';
+import { obtenerPrendas } from '../services/prendaService';
 import '../styles/Inicio.css';
 
 // ---------------------------------------------------------------------------
@@ -18,6 +19,19 @@ const palette = {
   ink: '#231421',
   slate: '#5b4a56',
 };
+
+const normalizeText = (value = '') => String(value)
+  .normalize('NFD')
+  .replace(/[\u0300-\u036f]/g, '')
+  .trim()
+  .toLowerCase();
+
+function prendaEstaActiva(estado) {
+  const estadoNormalizado = normalizeText(estado);
+  return estadoNormalizado === '1'
+    || estadoNormalizado === 'activo'
+    || estadoNormalizado === 'disponible';
+}
 
 // Iconos simples en línea, en vez de fotografías, para representar las
 // prendas mientras no hay imágenes reales del catálogo.
@@ -147,6 +161,8 @@ export default function InicioPage() {
   const [cardHover, setCardHover] = useState(null);
   const [hoverCategory, setHoverCategory] = useState(null);
   const [activeLook, setActiveLook] = useState('casual');
+  const [prendasRegistradas, setPrendasRegistradas] = useState([]);
+  const [cargandoCategorias, setCargandoCategorias] = useState(true);
   const [email, setEmail] = useState('');
   const [subscribed, setSubscribed] = useState(false);
   const [usuarioActual, setUsuarioActual] = useState(() => {
@@ -174,6 +190,23 @@ export default function InicioPage() {
     return () => window.removeEventListener('storage', actualizarUsuario);
   }, []);
 
+  useEffect(() => {
+    const cargarPrendasRegistradas = async () => {
+      try {
+        const data = await obtenerPrendas();
+        const lista = Array.isArray(data) ? data : Array.isArray(data?.value) ? data.value : [];
+        setPrendasRegistradas(lista.filter((prenda) => prendaEstaActiva(prenda.estado)));
+      } catch (error) {
+        console.error('Error cargando cantidades por género:', error);
+        setPrendasRegistradas([]);
+      } finally {
+        setCargandoCategorias(false);
+      }
+    };
+
+    cargarPrendasRegistradas();
+  }, []);
+
   const avatarSrc = usuarioActual?.imagenPerfil
     ? `data:image/jpeg;base64,${usuarioActual.imagenPerfil}`
     : null;
@@ -195,10 +228,14 @@ export default function InicioPage() {
   };
 
   const categorias = [
-    { id: 'mujer', nombre: 'Mujer', cantidad: '128 prendas', color: palette.fucsia, Icon: IconDress },
-    { id: 'hombre', nombre: 'Hombre', cantidad: '96 prendas', color: palette.plum, Icon: IconShirt },
-    { id: 'unisex', nombre: 'Unisex', cantidad: '62 prendas', color: palette.sage, Icon: IconSwap },
+    { id: 'mujer', nombre: 'Mujer', color: palette.fucsia, Icon: IconDress },
+    { id: 'hombre', nombre: 'Hombre', color: palette.plum, Icon: IconShirt },
+    { id: 'unisex', nombre: 'Unisex', color: palette.sage, Icon: IconSwap },
   ];
+
+  const contarPrendasPorGenero = (genero) => prendasRegistradas.filter((prenda) => (
+    normalizeText(prenda.genero) === normalizeText(genero)
+  )).length;
 
   const looks = [
     {
@@ -238,9 +275,9 @@ export default function InicioPage() {
         </div>
 
         <nav className="inicio-nav">
-          <a href="#mujer">Mujer</a>
-          <a href="#hombre">Hombre</a>
-          <a href="#unisex">Unisex</a>
+          <Link to="/catalogo-cliente?genero=Mujer">Mujer</Link>
+          <Link to="/catalogo-cliente?genero=Hombre">Hombre</Link>
+          <Link to="/catalogo-cliente?genero=Unisex">Unisex</Link>
           <a href="#historia">Nuestra historia</a>
           {String(usuarioActual?.rol || '').trim().toLowerCase().includes('cliente') && (
             <Link to="/compras">Compras</Link>
@@ -375,7 +412,9 @@ export default function InicioPage() {
                 <Icon />
                 <div>
                   <div className="inicio-category-name">{cat.nombre}</div>
-                  <div className="inicio-category-amount">{cat.cantidad}</div>
+                  <div className="inicio-category-amount">
+                    {cargandoCategorias ? 'Cargando...' : `${contarPrendasPorGenero(cat.nombre)} prendas`}
+                  </div>
                 </div>
               </Link>
             );
@@ -483,9 +522,9 @@ export default function InicioPage() {
           <div>
             <div className="inicio-footer-group-title">Tienda</div>
             <div className="inicio-footer-links">
-              <a href="#mujer">Mujer</a>
-              <a href="#hombre">Hombre</a>
-              <a href="#unisex">Unisex</a>
+              <Link to="/catalogo-cliente?genero=Mujer">Mujer</Link>
+              <Link to="/catalogo-cliente?genero=Hombre">Hombre</Link>
+              <Link to="/catalogo-cliente?genero=Unisex">Unisex</Link>
               <a href="#looks">Descubre tu look</a>
             </div>
           </div>

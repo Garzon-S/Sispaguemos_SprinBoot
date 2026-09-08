@@ -117,7 +117,7 @@ export default function PedidosAdmin() {
                     </td>
                     <td className="order-amount">{formatearMoneda(pedido.totalEstimado)}</td>
                     <td>{formatearFecha(pedido.fechaPedido)}</td>
-                    <td>PayPal Sandbox</td>
+                    <td>PayPal </td>
                     <td>
                       <select
                         className={`order-status order-status-${String(pedido.estado || 'Pendiente').toLowerCase().replaceAll(' ', '-')}`}
@@ -145,7 +145,7 @@ export default function PedidosAdmin() {
                         <div className="order-details-list">
                           {(pedido.detalles || []).map((detalle) => (
                             <span key={detalle.idDetalle}>
-                              {detalle.cantidad}x {detalle.nombrePrenda} ({detalle.fkIdPrenda}) · {formatearMoneda(detalle.subtotal)}
+                              {detalle.cantidad}x {detalle.nombrePrenda} · Talla: {detalle.talla || 'No registrada'} · {formatearMoneda(detalle.subtotal ?? (detalle.precioUnitario * detalle.cantidad))}
                             </span>
                           ))}
                         </div>

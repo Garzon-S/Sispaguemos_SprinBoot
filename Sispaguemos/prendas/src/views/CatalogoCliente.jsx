@@ -1,6 +1,6 @@
 import { useEffect, useMemo, useState } from 'react';
 import { useLocation } from 'react-router-dom';
-import { obtenerPrendas } from '../services/prendaService';
+import { obtenerPrendas, obtenerTallasPorPrenda } from '../services/prendaService';
 import '../styles/CatalogoCliente.css';
 
 // Paleta "Pague Menos": fucsia de marca + aubergine casi negro + dorado + salvia,
@@ -35,6 +35,10 @@ function formatCurrency(value) {
 function getCarritoKey(usuario) {
   const identificador = usuario?.idUsuario || usuario?.id_usuario || usuario?.id || usuario?.correo || usuario?.email;
   return identificador ? `carrito_${encodeURIComponent(String(identificador).trim().toLowerCase())}` : null;
+}
+
+function getCartItemKey(item) {
+  return `${item.id}::${item.tipoTalla || 'sin-tipo'}::${item.idTalla || item.talla || 'sin-talla'}`;
 }
 
 function getImageSrc(value) {
@@ -109,6 +113,8 @@ export default function CatalogoCliente({ onVolverInicio, onAgregarCarrito, onVe
   const [generoSeleccionado, setGeneroSeleccionado] = useState('Todos');
   const [cartCount, setCartCount] = useState(0);
   const [cartBump, setCartBump] = useState(false);
+  const [avisoCarrito, setAvisoCarrito] = useState('');
+  const [selectorTalla, setSelectorTalla] = useState(null);
   const [cantidades, setCantidades] = useState({});
   const [carritoAbierto, setCarritoAbierto] = useState(false);
   const [usuarioActual, setUsuarioActual] = useState(() => {
@@ -219,8 +225,8 @@ export default function CatalogoCliente({ onVolverInicio, onAgregarCarrito, onVe
     }
   };
 
-  const handleAgregarCarrito = (prenda, cantidad = 1) => {
-    const stockDisponible = Number(prenda?.stock ?? 0);
+  const handleAgregarCarrito = (prenda, cantidad = 1, tallaSeleccionada) => {
+    const stockDisponible = Number(tallaSeleccionada?.cantidadTalla ?? prenda?.stock ?? 0);
     const cantidadSegura = Math.max(1, Math.min(Number(cantidad) || 1, stockDisponible || 1));
 
     if (!usuarioActual) {
@@ -232,25 +238,66 @@ export default function CatalogoCliente({ onVolverInicio, onAgregarCarrito, onVe
     }
 
     setCarrito((prev) => {
-      const index = prev.findIndex((item) => item.id === prenda.id);
+      const index = prev.findIndex((item) => (
+        getCartItemKey(item) === getCartItemKey({ ...prenda, talla: tallaSeleccionada.talla, tipoTalla: tallaSeleccionada.tipoTalla, idTalla: tallaSeleccionada.idTalla })
+      ));
       if (index >= 0) {
         const actualizado = [...prev];
         actualizado[index] = {
           ...actualizado[index],
           cantidad: Math.min(
             Number(actualizado[index].cantidad || 0) + cantidadSegura,
-            Number(prenda.stock || cantidadSegura)
+            stockDisponible
           ),
         };
         return actualizado;
       }
-      return [...prev, { id: prenda.id, nombre: prenda.nombre, precio: prenda.precio, cantidad: cantidadSegura, imagen: prenda.imagen }];
+      return [...prev, {
+        id: prenda.id,
+        nombre: prenda.nombre,
+        precio: prenda.precio,
+        cantidad: cantidadSegura,
+        imagen: prenda.imagen,
+        talla: tallaSeleccionada.talla,
+        stockTalla: stockDisponible,
+        tipoTalla: tallaSeleccionada.tipoTalla,
+        idTalla: tallaSeleccionada.idTalla,
+      }];
     });
 
+    setAvisoCarrito(
+      cantidadSegura === 1
+        ? 'Has agregado una prenda a tu carrito de compras.'
+        : `Has agregado ${cantidadSegura} prendas a tu carrito de compras.`
+    );
+    window.clearTimeout(handleAgregarCarrito._noticeTimer);
+    handleAgregarCarrito._noticeTimer = window.setTimeout(() => setAvisoCarrito(''), 2800);
     setCartBump(true);
     window.clearTimeout(handleAgregarCarrito._t);
     handleAgregarCarrito._t = window.setTimeout(() => setCartBump(false), 480);
     if (typeof onAgregarCarrito === 'function') onAgregarCarrito(prenda, cantidadSegura);
+  };
+
+  const solicitarTalla = async (prenda, cantidad = 1) => {
+    if (!usuarioActual) {
+      setCarritoAbierto(true);
+      return;
+    }
+
+    setSelectorTalla({ prenda, cantidad: Number(cantidad) || 1, tallas: [], loading: true, error: '' });
+    try {
+      const tallas = await obtenerTallasPorPrenda(prenda.id, prenda.genero);
+      setSelectorTalla((prev) => ({ ...prev, tallas, loading: false }));
+    } catch (error) {
+      console.error('Error cargando tallas de la prenda:', error);
+      setSelectorTalla((prev) => ({ ...prev, loading: false, error: 'No se pudieron cargar las tallas disponibles.' }));
+    }
+  };
+
+  const confirmarTalla = (talla) => {
+    if (!selectorTalla) return;
+    handleAgregarCarrito(selectorTalla.prenda, selectorTalla.cantidad, talla);
+    setSelectorTalla(null);
   };
 
   const abrirCarrito = () => {
@@ -279,22 +326,21 @@ export default function CatalogoCliente({ onVolverInicio, onAgregarCarrito, onVe
       ? 'Tu carrito está vacío por ahora.'
       : 'Productos agregados a tu compra.';
 
-  const sumarUnidadCarrito = (id) => {
+  const sumarUnidadCarrito = (itemSeleccionado) => {
     setCarrito((prev) =>
       prev.map((item) => {
-        if (item.id !== id) return item;
-        const prendaActual = prendas.find((p) => p.id === id);
-        const stockMax = Number(prendaActual?.stock ?? item.cantidad ?? 1);
+        if (getCartItemKey(item) !== getCartItemKey(itemSeleccionado)) return item;
+        const stockMax = Number(item.stockTalla ?? item.cantidad ?? 1);
         return { ...item, cantidad: Math.min(Number(item.cantidad || 1) + 1, stockMax) };
       })
     );
   };
 
-  const restarUnidadCarrito = (id) => {
+  const restarUnidadCarrito = (itemSeleccionado) => {
     setCarrito((prev) =>
       prev
         .map((item) => {
-          if (item.id !== id) return item;
+          if (getCartItemKey(item) !== getCartItemKey(itemSeleccionado)) return item;
           const nuevaCantidad = Number(item.cantidad || 1) - 1;
           return { ...item, cantidad: Math.max(0, nuevaCantidad) };
         })
@@ -343,6 +389,44 @@ export default function CatalogoCliente({ onVolverInicio, onAgregarCarrito, onVe
         </div>
       </div>
 
+      {avisoCarrito && (
+        <div className="cc-cart-notice" role="status" aria-live="polite">
+          {avisoCarrito}
+        </div>
+      )}
+
+      {selectorTalla && (
+        <div className="cc-size-overlay" onClick={() => setSelectorTalla(null)}>
+          <section className="cc-size-modal" onClick={(event) => event.stopPropagation()}>
+            <div className="cc-cart-header">
+              <div>
+                <h2>Elige una talla</h2>
+                <p className="cc-size-product-name">{selectorTalla.prenda.nombre}</p>
+              </div>
+              <button type="button" onClick={() => setSelectorTalla(null)} className="cc-close-btn" aria-label="Cerrar selector de talla">×</button>
+            </div>
+
+            {selectorTalla.loading ? (
+              <p className="cc-size-message">Consultando tallas disponibles...</p>
+            ) : selectorTalla.error ? (
+              <p className="cc-size-message cc-size-message--error">{selectorTalla.error}</p>
+            ) : selectorTalla.tallas.length === 0 ? (
+              <p className="cc-size-message">Esta prenda no tiene tallas disponibles.</p>
+            ) : (
+              <div className="cc-size-list">
+                {selectorTalla.tallas.map((talla) => (
+                  <button key={`${talla.tipoTalla}-${talla.idTalla || talla.talla}`} type="button" className="cc-size-option" onClick={() => confirmarTalla(talla)}>
+                    <span className="cc-size-label">Talla {talla.talla}</span>
+                    <span className="cc-size-stock">{talla.cantidadTalla} disponibles</span>
+                    <span className="cc-size-add">Agregar</span>
+                  </button>
+                ))}
+              </div>
+            )}
+          </section>
+        </div>
+      )}
+
       {carritoAbierto && (
         <div className="cc-cart-overlay"
           onClick={cerrarCarrito}
@@ -367,7 +451,7 @@ export default function CatalogoCliente({ onVolverInicio, onAgregarCarrito, onVe
               <div className="cc-cart-box">
                 <div className="cc-cart-items">
                   {carrito.map((item) => (
-                    <div key={item.id} className="cc-cart-item">
+                    <div key={getCartItemKey(item)} className="cc-cart-item">
                       <div className="cc-cart-item-image">
                         {item.imagen ? (
                           <img src={item.imagen} alt={item.nombre} />
@@ -378,10 +462,11 @@ export default function CatalogoCliente({ onVolverInicio, onAgregarCarrito, onVe
 
                       <div className="cc-cart-item-info">
                         <div className="cc-cart-item-name">{item.nombre}</div>
+                        <div className="cc-cart-item-size">Talla: <strong>{item.talla || 'No especificada'}</strong></div>
                         <div className="cc-cart-item-controls">
                           <button
                             type="button"
-                            onClick={() => restarUnidadCarrito(item.id)}
+                            onClick={() => restarUnidadCarrito(item)}
                             className="cc-quantity-btn cc-quantity-btn--minus"
                             aria-label={`Restar una unidad de ${item.nombre}`}
                           >
@@ -392,7 +477,7 @@ export default function CatalogoCliente({ onVolverInicio, onAgregarCarrito, onVe
                           </span>
                           <button
                             type="button"
-                            onClick={() => sumarUnidadCarrito(item.id)}
+                            onClick={() => sumarUnidadCarrito(item)}
                             className="cc-quantity-btn cc-quantity-btn--plus"
                             aria-label={`Sumar una unidad de ${item.nombre}`}
                           >
@@ -566,7 +651,7 @@ export default function CatalogoCliente({ onVolverInicio, onAgregarCarrito, onVe
                       <div className="cc-product-actions">
                         <button
                           type="button"
-                          onClick={() => handleAgregarCarrito(prenda, cantidades[prenda.id] ?? 1)}
+                          onClick={() => solicitarTalla(prenda, cantidades[prenda.id] ?? 1)}
                           className="cc-btn-primary"
                         >
                           Agregar

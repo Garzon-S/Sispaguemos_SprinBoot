@@ -33,12 +33,13 @@ public class EmailService {
         if (items != null) {
             for (Map<String, Object> item : items) {
                 String nombre = (String) item.get("nombre");
+                String talla = item.get("talla") == null ? "No especificada" : String.valueOf(item.get("talla"));
                 int cantidad = Integer.parseInt(item.get("cantidad").toString());
                 double precio = Double.parseDouble(item.get("precio").toString());
                 double sub = precio * cantidad;
 
                 htmlItems.append("<tr>")
-                        .append("<td style='padding: 8px; border-bottom: 1px solid #eee;'>").append(nombre).append("</td>")
+                        .append("<td style='padding: 8px; border-bottom: 1px solid #eee;'>").append(nombre).append("<br><small style='color: #666;'>Talla: ").append(talla).append("</small></td>")
                         .append("<td style='padding: 8px; border-bottom: 1px solid #eee; text-align: center;'>").append(cantidad).append("</td>")
                         .append("<td style='padding: 8px; border-bottom: 1px solid #eee; text-align: right;'>$").append(String.format("%,.0f", precio)).append("</td>")
                         .append("<td style='padding: 8px; border-bottom: 1px solid #eee; text-align: right;'>$").append(String.format("%,.0f", sub)).append("</td>")
@@ -56,7 +57,7 @@ public class EmailService {
                 "<p><b>Método de Pago:</b> " + metodoPago + "</p>" +
                 "<table style='width: 100%; border-collapse: collapse; margin-top: 15px;'>" +
                 "<thead><tr style='background-color: #f8f9fa; color: #333; text-align: left;'>" +
-                "<th style='padding: 8px;'>Prenda</th><th style='padding: 8px; text-align: center;'>Cant</th><th style='padding: 8px; text-align: right;'>Vr. Unit</th><th style='padding: 8px; text-align: right;'>Subtotal</th>" +
+                "<th style='padding: 8px;'>Prenda / Talla</th><th style='padding: 8px; text-align: center;'>Cant</th><th style='padding: 8px; text-align: right;'>Vr. Unit</th><th style='padding: 8px; text-align: right;'>Subtotal</th>" +
                 "</tr></thead><tbody>" +
                 htmlItems.toString() +
                 "</tbody></table>" +

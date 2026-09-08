@@ -22,6 +22,9 @@ public class DetallePedido {
     @Column(name = "fk_id_prenda", nullable = false, length = 25)
     private String fkIdPrenda;
 
+    @Column(name = "talla", length = 20)
+    private String talla;
+
     @Column(name = "cantidad", nullable = false)
     private Integer cantidad;
 
@@ -37,6 +40,8 @@ public class DetallePedido {
     public void setFkIdPedido(Long fkIdPedido) { this.fkIdPedido = fkIdPedido; }
     public String getFkIdPrenda() { return fkIdPrenda; }
     public void setFkIdPrenda(String fkIdPrenda) { this.fkIdPrenda = fkIdPrenda; }
+    public String getTalla() { return talla; }
+    public void setTalla(String talla) { this.talla = talla; }
     public Integer getCantidad() { return cantidad; }
     public void setCantidad(Integer cantidad) { this.cantidad = cantidad; }
     public Double getPrecioUnitario() { return precioUnitario; }

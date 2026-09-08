@@ -6,8 +6,6 @@ export const obtenerBodega = async () => {
     const response = await fetch(API_URL);
     if (!response.ok) throw new Error('Error al obtener bodega');
     const data = await response.json();
-    
-    // Mapeamos para asegurar que siempre exista 'id_stock' o 'idStock'
     return data.map(item => ({
       ...item,
       id_stock: item.idStock || item.id_stock || item.idBodega || item.id_bodega
