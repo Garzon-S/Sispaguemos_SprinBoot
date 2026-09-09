@@ -2,6 +2,13 @@ package backend.controller;
 
 import backend.model.Pedido;
 import backend.model.DetallePedido;
+import backend.model.Prenda;
+import backend.model.Hombre;
+import backend.model.Mujer;
+import backend.model.Infantil;
+import backend.model.VentaPedido;
+import backend.model.MovimientoInventario;
+import backend.model.Bodega;
 import backend.repository.DetallePedidoRepository;
 import backend.repository.PedidoRepository;
 import backend.repository.PrendaRepository;
@@ -9,15 +16,15 @@ import backend.repository.UsuarioRepository;
 import backend.repository.HombreRepository;
 import backend.repository.MujerRepository;
 import backend.repository.InfantilRepository;
-import backend.model.Prenda;
-import backend.model.Hombre;
-import backend.model.Mujer;
-import backend.model.Infantil;
+import backend.repository.VentaRepositoryEmpleado;
+import backend.repository.MovimientoInventarioRepository;
+import backend.repository.BodegaRepository;
 import org.springframework.transaction.annotation.Transactional;
 import org.springframework.transaction.interceptor.TransactionAspectSupport;
 import org.springframework.http.ResponseEntity;
 import org.springframework.web.bind.annotation.*;
 
+import java.time.LocalDateTime;
 import java.util.List;
 import java.util.Map;
 import java.util.HashMap;
@@ -27,7 +34,13 @@ import java.util.HashMap;
 @CrossOrigin(origins = "*")
 public class PedidoController {
 
-    private static final List<String> ESTADOS_PERMITIDOS = List.of("Pendiente", "Listo para recoger en tienda", "Cancelado");
+    private static final List<String> ESTADOS_PERMITIDOS = List.of(
+        "Pendiente", 
+        "Listo para recoger en tienda", 
+        "Completado", 
+        "Vendido", 
+        "Cancelado"
+    );
 
     private final PedidoRepository pedidoRepository;
     private final DetallePedidoRepository detallePedidoRepository;
@@ -36,8 +49,22 @@ public class PedidoController {
     private final HombreRepository hombreRepository;
     private final MujerRepository mujerRepository;
     private final InfantilRepository infantilRepository;
+    private final VentaRepositoryEmpleado ventaRepositoryEmpleado;
+    private final MovimientoInventarioRepository movimientoRepository;
+    private final BodegaRepository bodegaRepository;
 
-    public PedidoController(PedidoRepository pedidoRepository, DetallePedidoRepository detallePedidoRepository, PrendaRepository prendaRepository, UsuarioRepository usuarioRepository, HombreRepository hombreRepository, MujerRepository mujerRepository, InfantilRepository infantilRepository) {
+    public PedidoController(
+        PedidoRepository pedidoRepository, 
+        DetallePedidoRepository detallePedidoRepository, 
+        PrendaRepository prendaRepository, 
+        UsuarioRepository usuarioRepository, 
+        HombreRepository hombreRepository, 
+        MujerRepository mujerRepository, 
+        InfantilRepository infantilRepository,
+        VentaRepositoryEmpleado ventaRepositoryEmpleado,
+        MovimientoInventarioRepository movimientoRepository,
+        BodegaRepository bodegaRepository
+    ) {
         this.pedidoRepository = pedidoRepository;
         this.detallePedidoRepository = detallePedidoRepository;
         this.prendaRepository = prendaRepository;
@@ -45,6 +72,9 @@ public class PedidoController {
         this.hombreRepository = hombreRepository;
         this.mujerRepository = mujerRepository;
         this.infantilRepository = infantilRepository;
+        this.ventaRepositoryEmpleado = ventaRepositoryEmpleado;
+        this.movimientoRepository = movimientoRepository;
+        this.bodegaRepository = bodegaRepository;
     }
 
     @PostMapping
@@ -155,13 +185,12 @@ public class PedidoController {
         respuesta.put("fkIdUsuarioCliente", pedido.getFkIdUsuario());
         respuesta.put("correoCliente", usuarioRepository.findById(pedido.getFkIdUsuario()).map(usuario -> usuario.getCorreo()).orElse("No registrado"));
 
-List<Map<String, Object>> detalles = detallePedidoRepository.findByFkIdPedido(pedido.getIdPedido()).stream().map(detalle -> {
+        List<Map<String, Object>> detalles = detallePedidoRepository.findByFkIdPedido(pedido.getIdPedido()).stream().map(detalle -> {
             Map<String, Object> item = new HashMap<>();
             item.put("idDetalle", detalle.getIdDetalle());
             item.put("fkIdPrenda", detalle.getFkIdPrenda());
             item.put("talla", detalle.getTalla());
             
-            // Convertimos detalle.getFkIdPrenda() a Integer con Integer.valueOf(...)
             item.put("nombrePrenda", prendaRepository.findById(Integer.valueOf(detalle.getFkIdPrenda())).map(prenda -> prenda.getNombrePrend()).orElse("Prenda no encontrada"));
             
             item.put("cantidad", detalle.getCantidad());
@@ -175,6 +204,7 @@ List<Map<String, Object>> detalles = detallePedidoRepository.findByFkIdPedido(pe
     }
 
     @PutMapping("/{idPedido}/estado")
+    @Transactional
     public ResponseEntity<?> actualizarEstado(@PathVariable Long idPedido, @RequestBody Map<String, String> payload) {
         return pedidoRepository.findById(idPedido)
                 .map(pedido -> {
@@ -183,8 +213,128 @@ List<Map<String, Object>> detalles = detallePedidoRepository.findByFkIdPedido(pe
                     if (!ESTADOS_PERMITIDOS.contains(estadoPedido.trim())) {
                         return ResponseEntity.badRequest().body("Estado no válido");
                     }
-                    pedido.setEstadoPedido(estadoPedido.trim());
+                    
+                    String nuevoEstado = estadoPedido.trim();
+                    pedido.setEstadoPedido(nuevoEstado);
                     Pedido pedidoActualizado = pedidoRepository.save(pedido);
+
+                    if ("Vendido".equalsIgnoreCase(nuevoEstado)) {
+                        boolean yaExisteVenta = ventaRepositoryEmpleado.findAll().stream()
+                            .anyMatch(v -> v.getFkIdPedido() != null && v.getFkIdPedido().longValue() == pedido.getIdPedido().longValue());
+
+                        if (!yaExisteVenta) {
+                            VentaPedido nuevaVenta = new VentaPedido();
+                            nuevaVenta.setFechaVenta(LocalDateTime.now());
+                            nuevaVenta.setTotalVenta(pedido.getTotalPedido() != null ? pedido.getTotalPedido() : 0.0);
+                            nuevaVenta.setMetodoPago("Efectivo");
+                            nuevaVenta.setFkIdPedido(pedido.getIdPedido().intValue());
+                            ventaRepositoryEmpleado.save(nuevaVenta);
+
+                            List<DetallePedido> detallesPedido = detallePedidoRepository.findByFkIdPedido(pedido.getIdPedido());
+                            
+                            // Obtenemos un ID de usuario válido (el cliente del pedido o el primer usuario del sistema)
+                            Long idUsuarioMovimiento = pedido.getFkIdUsuario() != null ? pedido.getFkIdUsuario().longValue() : 1L;
+                            try {
+                                List<?> todosUsuarios = usuarioRepository.findAll();
+                                if (!todosUsuarios.isEmpty()) {
+                                    Object primerUsr = todosUsuarios.get(0);
+                                    Object idU = primerUsr.getClass().getMethod("getIdUsuario").invoke(primerUsr);
+                                    if (idU != null) idUsuarioMovimiento = Long.parseLong(String.valueOf(idU));
+                                }
+                            } catch (Exception ignored) {}
+
+                            for (DetallePedido detalle : detallesPedido) {
+                                MovimientoInventario salidaKardex = new MovimientoInventario();
+                                salidaKardex.setFechaMovimiento(LocalDateTime.now());
+                                
+                                try {
+                                    salidaKardex.setTipoMovimiento(MovimientoInventario.TipoMovimiento.valueOf("SALIDA"));
+                                } catch (Exception e) {}
+
+                                salidaKardex.setCantidad(detalle.getCantidad());
+                                salidaKardex.setObservacion("Venta Web - Pedido #" + pedido.getIdPedido());
+
+                                // Asignar el ID de usuario obligatorio para evitar violación de restricción
+                                try {
+                                    salidaKardex.getClass().getMethod("setFkIdUsuario", Long.class).invoke(salidaKardex, idUsuarioMovimiento);
+                                } catch (Exception e) {
+                                    try {
+                                        salidaKardex.getClass().getMethod("setFkIdUsuario", Integer.class).invoke(salidaKardex, idUsuarioMovimiento.intValue());
+                                    } catch (Exception ignored) {}
+                                }
+
+                                try {
+                                    Long idPrendaLong = Long.valueOf(detalle.getFkIdPrenda());
+                                    Bodega bodegaAsociada = bodegaRepository.findAll().stream()
+                                        .filter(b -> {
+                                            try {
+                                                Object pId = b.getClass().getMethod("getIdPrenda").invoke(b);
+                                                if (pId != null && Long.parseLong(String.valueOf(pId)) == idPrendaLong) return true;
+                                            } catch (Exception e) {
+                                                try {
+                                                    Object prendaObj = b.getClass().getMethod("getPrenda").invoke(b);
+                                                    if (prendaObj != null) {
+                                                        Object pId = prendaObj.getClass().getMethod("getIdPrenda").invoke(prendaObj);
+                                                        if (pId != null && Long.parseLong(String.valueOf(pId)) == idPrendaLong) return true;
+                                                    }
+                                                } catch (Exception ignored) {}
+                                            }
+                                            return false;
+                                        }).findFirst().orElse(null);
+
+                                    if (bodegaAsociada != null) {
+                                        Long idStockVal = null;
+                                        try {
+                                            Object idObj = bodegaAsociada.getClass().getMethod("getIdStock").invoke(bodegaAsociada);
+                                            if (idObj != null) idStockVal = Long.parseLong(String.valueOf(idObj));
+                                        } catch (Exception e) {
+                                            try {
+                                                Object idObj = bodegaAsociada.getClass().getMethod("getIdBodega").invoke(bodegaAsociada);
+                                                if (idObj != null) idStockVal = Long.parseLong(String.valueOf(idObj));
+                                            } catch (Exception ignored) {}
+                                        }
+
+                                        if (idStockVal != null) {
+                                            try {
+                                                salidaKardex.getClass().getMethod("setFkIdStock", Long.class).invoke(salidaKardex, idStockVal);
+                                            } catch (Exception e) {
+                                                try {
+                                                    salidaKardex.getClass().getMethod("setFkIdStock", Integer.class).invoke(salidaKardex, idStockVal.intValue());
+                                                } catch (Exception ignored) {}
+                                            }
+                                        }
+                                        
+                                        try {
+                                            salidaKardex.getClass().getMethod("setStock", bodegaAsociada.getClass()).invoke(salidaKardex, bodegaAsociada);
+                                        } catch (Exception ignored) {}
+                                    } else {
+                                        List<Bodega> todasBodegas = bodegaRepository.findAll();
+                                        if (!todasBodegas.isEmpty()) {
+                                            Bodega primera = todasBodegas.get(0);
+                                            Long idStockVal = null;
+                                            try {
+                                                Object idObj = primera.getClass().getMethod("getIdStock").invoke(primera);
+                                                if (idObj != null) idStockVal = Long.parseLong(String.valueOf(idObj));
+                                            } catch (Exception ignored) {}
+
+                                            if (idStockVal != null) {
+                                                try {
+                                                    salidaKardex.getClass().getMethod("setFkIdStock", Long.class).invoke(salidaKardex, idStockVal);
+                                                } catch (Exception e) {
+                                                    try {
+                                                        salidaKardex.getClass().getMethod("setFkIdStock", Integer.class).invoke(salidaKardex, idStockVal.intValue());
+                                                    } catch (Exception ignored) {}
+                                                }
+                                            }
+                                        }
+                                    }
+                                } catch (Exception ignored) {}
+
+                                movimientoRepository.save(salidaKardex);
+                            }
+                        }
+                    }
+
                     return ResponseEntity.ok(crearRespuestaPedido(pedidoActualizado));
                 })
                 .orElseGet(() -> ResponseEntity.notFound().build());

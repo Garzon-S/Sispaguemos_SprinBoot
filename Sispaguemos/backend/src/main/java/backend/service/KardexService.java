@@ -24,7 +24,7 @@ public class KardexService {
     public List<KardexDetalleDTO> obtenerReporteKardexPorPrenda(Long idPrenda) {
         List<MovimientoInventario> movimientos = movimientoRepository.findAll();
 
-        // 1. ORDENAR CRONOLÓGICAMENTE LOS MOVIMIENTOS
+        // 1. Ordenar cronológicamente del más antiguo al más reciente
         movimientos.sort((m1, m2) -> {
             if (m1.getFechaMovimiento() != null && m2.getFechaMovimiento() != null) {
                 int comparacionFechas = m1.getFechaMovimiento().compareTo(m2.getFechaMovimiento());
@@ -38,15 +38,13 @@ public class KardexService {
 
         List<Bodega> bodegas = bodegaRepository.findAll();
         List<KardexDetalleDTO> kardexDetalles = new ArrayList<>();
-
-        // 2. Identificamos los IDs de bodega/stock válidos para esta prenda
         List<Long> idsBodegaValidos = new ArrayList<>();
         double costoPromedioPrenda = 30000.0;
+        int stockActualBodega = 0;
 
         for (Bodega b : bodegas) {
             try {
                 Long prendaIdAsociada = null;
-                
                 try {
                     Object pId = b.getClass().getMethod("getIdPrenda").invoke(b);
                     if (pId != null) prendaIdAsociada = Long.parseLong(String.valueOf(pId));
@@ -67,6 +65,12 @@ public class KardexService {
                     }
 
                     try {
+                        Object stockObj = b.getClass().getMethod("getCantidadStock").invoke(b);
+                        if (stockObj == null) stockObj = b.getClass().getMethod("getStock").invoke(b);
+                        if (stockObj != null) stockActualBodega = Integer.parseInt(String.valueOf(stockObj));
+                    } catch (Exception ignored) {}
+
+                    try {
                         Object costoObj = b.getClass().getMethod("getCostoPromedio").invoke(b);
                         if (costoObj instanceof BigDecimal) {
                             costoPromedioPrenda = ((BigDecimal) costoObj).doubleValue();
@@ -78,14 +82,10 @@ public class KardexService {
             } catch (Exception ignored) {}
         }
 
-        int saldoCantidadAcumulada = 0;
-        double saldoTotalAcumulado = 0.0;
-        int contador = 1;
-
-        // 3. Procesamos los movimientos ordenados
+        // Filtrar solo los movimientos que pertenecen a esta prenda
+        List<MovimientoInventario> movimientosPrenda = new ArrayList<>();
         for (MovimientoInventario mov : movimientos) {
             boolean perteneceAPrenda = false;
-
             try {
                 Object relObj = null;
                 try { relObj = mov.getClass().getMethod("getStock").invoke(mov); } catch (Exception e) {}
@@ -108,59 +108,109 @@ public class KardexService {
                 }
             } catch (Exception ignored) {}
 
-            if (idsBodegaValidos.isEmpty()) {
-                continue;
-            }
-
             if (perteneceAPrenda) {
-                KardexDetalleDTO detalle = new KardexDetalleDTO();
-                detalle.setNumero(contador++);
-                detalle.setFecha(mov.getFechaMovimiento());
-                
-                String tipoMov = mov.getTipoMovimiento() != null ? mov.getTipoMovimiento().toString() : "Entrada";
-                detalle.setConcepto(tipoMov);
-                detalle.setDocumento(mov.getObservacion() != null ? mov.getObservacion() : "REF-" + mov.getIdMovimiento());
-
-                int cantidad = mov.getCantidad() != null ? Math.abs(mov.getCantidad()) : 0;
-
-                if ("Entrada".equalsIgnoreCase(tipoMov) || "ENTRADA".equalsIgnoreCase(tipoMov)) {
-                    detalle.setCantEntrada(cantidad);
-                    detalle.setVrUnitarioEntrada(costoPromedioPrenda);
-                    detalle.setVrTotalEntrada(cantidad * costoPromedioPrenda);
-
-                    detalle.setCantSalida(0);
-                    detalle.setVrUnitarioSalida(0.0);
-                    detalle.setVrTotalSalida(0.0);
-
-                    saldoCantidadAcumulada += cantidad;
-                    saldoTotalAcumulado += detalle.getVrTotalEntrada();
-                } else {
-                    detalle.setCantEntrada(0);
-                    detalle.setVrUnitarioEntrada(0.0);
-                    detalle.setVrTotalEntrada(0.0);
-
-                    detalle.setCantSalida(cantidad);
-
-                    double costoUnitarioSalida = (saldoCantidadAcumulada > 0) 
-                        ? (saldoTotalAcumulado / saldoCantidadAcumulada) 
-                        : costoPromedioPrenda;
-
-                    detalle.setVrUnitarioSalida(costoUnitarioSalida);
-                    double valorTotalSalida = cantidad * costoUnitarioSalida;
-                    detalle.setVrTotalSalida(valorTotalSalida);
-
-                    // Permite restar libremente, incluso si cae en negativo
-                    saldoCantidadAcumulada -= cantidad;
-                    saldoTotalAcumulado -= valorTotalSalida;
-                }
-
-                detalle.setSaldoCantidad(saldoCantidadAcumulada);
-                double saldoUnitarioFinal = saldoCantidadAcumulada != 0 ? (saldoTotalAcumulado / saldoCantidadAcumulada) : costoPromedioPrenda;
-                detalle.setSaldoVrUnitario(Math.abs(saldoUnitarioFinal));
-                detalle.setSaldoTotal(saldoTotalAcumulado); // Permite negativos directos
-
-                kardexDetalles.add(detalle);
+                movimientosPrenda.add(mov);
             }
+        }
+
+        if (idsBodegaValidos.isEmpty()) {
+            return kardexDetalles;
+        }
+
+        // ==========================================================
+        // Calcular la existencia real ANTES del primer movimiento,
+        // sin necesitar columnas nuevas en la BD.
+        //
+        // stockActualBodega = cantidad_actual en la tabla stock, que
+        // ya refleja el resultado DESPUÉS de aplicar todos los
+        // movimientos de esta lista. Para saber cuánto había antes,
+        // recorremos los movimientos en reversa deshaciéndolos:
+        //   - si fue Entrada, se resta esa cantidad
+        //   - si fue Salida,  se suma esa cantidad
+        // ==========================================================
+        int stockInicialCalculado = stockActualBodega;
+        for (int i = movimientosPrenda.size() - 1; i >= 0; i--) {
+            MovimientoInventario mov = movimientosPrenda.get(i);
+            String tipoMovRev = mov.getTipoMovimiento() != null ? mov.getTipoMovimiento().toString() : "Entrada";
+            int cantidadRev = mov.getCantidad() != null ? Math.abs(mov.getCantidad()) : 0;
+
+            if ("Entrada".equalsIgnoreCase(tipoMovRev) || "ENTRADA".equalsIgnoreCase(tipoMovRev)) {
+                stockInicialCalculado -= cantidadRev;
+            } else {
+                stockInicialCalculado += cantidadRev;
+            }
+        }
+
+        // Salvaguarda: si por datos inconsistentes diera negativo,
+        // no propagamos el negativo a toda la tabla.
+        if (stockInicialCalculado < 0) {
+            stockInicialCalculado = 0;
+        }
+
+        int stockAcumulado = stockInicialCalculado;
+        double totalAcumulado = stockAcumulado * costoPromedioPrenda;
+
+        int contador = 1;
+        // ==========================================================
+        // FIN cálculo
+        // ==========================================================
+
+        for (MovimientoInventario mov : movimientosPrenda) {
+            KardexDetalleDTO detalle = new KardexDetalleDTO();
+            detalle.setNumero(contador++);
+            detalle.setFecha(mov.getFechaMovimiento());
+
+            String tipoMov = mov.getTipoMovimiento() != null ? mov.getTipoMovimiento().toString() : "Entrada";
+            detalle.setConcepto(tipoMov);
+            detalle.setDocumento(mov.getObservacion() != null ? mov.getObservacion() : "REF-" + mov.getIdMovimiento());
+
+            int cantidad = mov.getCantidad() != null ? Math.abs(mov.getCantidad()) : 0;
+
+            // 1. EXISTENCIA INICIAL: Lo que había antes de este movimiento específico
+            int existenciaInicial = stockAcumulado;
+            detalle.setExistenciaInicialCant(existenciaInicial);
+            double initUnit = existenciaInicial != 0 ? (totalAcumulado / existenciaInicial) : costoPromedioPrenda;
+            detalle.setExistenciaInicialVrUnit(Math.abs(initUnit));
+            detalle.setExistenciaInicialTotal(totalAcumulado);
+
+            // 2. PROCESAR MOVIMIENTO
+            if ("Entrada".equalsIgnoreCase(tipoMov) || "ENTRADA".equalsIgnoreCase(tipoMov)) {
+                detalle.setCantEntrada(cantidad);
+                detalle.setVrUnitarioEntrada(costoPromedioPrenda);
+                double vrEntTotal = cantidad * costoPromedioPrenda;
+                detalle.setVrTotalEntrada(vrEntTotal);
+
+                detalle.setCantSalida(0);
+                detalle.setVrUnitarioSalida(0.0);
+                detalle.setVrTotalSalida(0.0);
+
+                stockAcumulado += cantidad;
+                totalAcumulado += vrEntTotal;
+            } else {
+                detalle.setCantEntrada(0);
+                detalle.setVrUnitarioEntrada(0.0);
+                detalle.setVrTotalEntrada(0.0);
+
+                // Salvaguarda: no dejar que una salida deje el stock negativo
+                int cantidadSalidaReal = Math.min(cantidad, stockAcumulado);
+
+                detalle.setCantSalida(cantidadSalidaReal);
+                double costoUnitarioSalida = (stockAcumulado > 0) ? (totalAcumulado / stockAcumulado) : costoPromedioPrenda;
+                detalle.setVrUnitarioSalida(costoUnitarioSalida);
+                double vrSalTotal = cantidadSalidaReal * costoUnitarioSalida;
+                detalle.setVrTotalSalida(vrSalTotal);
+
+                stockAcumulado -= cantidadSalidaReal;
+                totalAcumulado -= vrSalTotal;
+            }
+
+            // 3. EXISTENCIA FINAL: Lo que queda después de este movimiento
+            detalle.setExistenciaFinalCant(stockAcumulado);
+            double finalUnit = stockAcumulado != 0 ? (totalAcumulado / stockAcumulado) : costoPromedioPrenda;
+            detalle.setExistenciaFinalVrUnit(Math.abs(finalUnit));
+            detalle.setExistenciaFinalTotal(totalAcumulado);
+
+            kardexDetalles.add(detalle);
         }
 
         return kardexDetalles;

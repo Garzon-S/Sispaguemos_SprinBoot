@@ -16,13 +16,14 @@ import PedidosAdmin from './views/PedidosAdmin';
 import TarjetaKardex from './views/TarjetaKardex';
 import Proveedores from './views/Proveedores';
 import FacturasProveedor from './views/FacturasProveedor';
+import ConsultaVentas from './views/ConsultaVentas';
 
 const normalizeRole = (value) => String(value ?? '').trim().toLowerCase();
 
 const isAdminOrEmployee = () => {
   try {
     const raw = localStorage.getItem('usuarioActual');
-    console.log("=== DEBUG USUARIO ACTUAL ===", raw); // Esto saldrá en tu consola F12
+    console.log("=== DEBUG USUARIO ACTUAL ===", raw);
     if (!raw) return false;
     const usuario = JSON.parse(raw);
 
@@ -55,6 +56,8 @@ function ProtectedAdminLayout() {
   return <Layout />;
 }
 
+
+
 function App() {
   return (
     <BrowserRouter>
@@ -68,6 +71,7 @@ function App() {
 
         <Route element={<ProtectedAdminLayout />}>
           <Route path="/dashboard" element={<DashboardAdmin />} />
+          <Route path="/consulta-ventas" element={<ConsultaVentas />} />
           <Route path="/bodega" element={<Bodega />} />
           <Route path="/prendas" element={<Prendas />} />
           <Route path="/movimientos" element={<MovimientosInventario />} />

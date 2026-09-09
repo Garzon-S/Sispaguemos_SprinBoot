@@ -8,7 +8,7 @@ import { obtenerPrendas } from '../services/prendaService';
 function VentasEmpleado() {
   const [prendas, setPrendas] = useState([]);
   const [usuarios, setUsuarios] = useState([]);
-  
+
   // Inicializamos el carrito leyendo de localStorage para que no se pierda al cambiar de pestaña
   const [carrito, setCarrito] = useState(() => {
     const carritoGuardado = localStorage.getItem('carrito_pos_empleado');
@@ -57,8 +57,8 @@ function VentasEmpleado() {
   const clienteEncontrado = usuarios.find(
     (u) => (u.correo || '').trim().toLowerCase() === emailCliente.trim().toLowerCase()
   );
-  
-  const nombreCliente = clienteEncontrado 
+
+  const nombreCliente = clienteEncontrado
     ? `${clienteEncontrado.primerNom || clienteEncontrado.primer_nom || ''} ${clienteEncontrado.primerApelli || clienteEncontrado.primer_apelli || ''}`.trim()
     : emailCliente ? emailCliente : 'Cliente General (Venta Libre)';
 
@@ -87,11 +87,16 @@ function VentasEmpleado() {
 
   const manejarBusquedaCodigo = (e) => {
     e.preventDefault();
-    const encontrada = prendas.find(p => String(p.idPrenda || p.id_prenda).trim().toLowerCase() === codigoBusqueda.trim().toLowerCase());
+    // BÚSQUEDA CORREGIDA: Ahora busca evaluando el Código de Barras (codigoBarras o codigo_barras)
+    const encontrada = prendas.find(p => {
+      const codigoBarrasPrenda = String(p.codigoBarras || p.codigo_barras || '').trim().toLowerCase();
+      return codigoBarrasPrenda === codigoBusqueda.trim().toLowerCase();
+    });
+
     if (encontrada) {
       agregarAlCarrito(encontrada);
     } else {
-      setError('❌ Prenda no encontrada con ese código.');
+      setError('❌ Prenda no encontrada con ese código de barras.');
       setTimeout(() => setError(''), 3000);
     }
   };
@@ -151,7 +156,7 @@ function VentasEmpleado() {
       setExito('✅ ¡Venta registrada con éxito y stock actualizado!');
       setCarrito([]); // Vaciamos el carrito tras procesar
       localStorage.removeItem('carrito_pos_empleado'); // Limpiamos el localStorage de la venta anterior
-      setMostrarModalFactura(true); 
+      setMostrarModalFactura(true);
       cargarDatos();
     } catch (err) {
       console.error("Error al procesar la venta:", err);
@@ -161,23 +166,23 @@ function VentasEmpleado() {
 
   const generarFacturaPDF = () => {
     const doc = new jsPDF();
-    
+
     doc.setFontSize(20);
     doc.setFont("helvetica", "bold");
     doc.text('SISPAGUEMOS - PAGUE MENOS', 105, 20, { align: 'center' });
-    
+
     doc.setFontSize(10);
     doc.setFont("helvetica", "normal");
     doc.text('NIT: 900.123.456-7', 105, 28, { align: 'center' });
     doc.text('Régimen Común - Responsables de IVA', 105, 34, { align: 'center' });
     doc.text('Bogotá, Colombia - Sede Salitre', 105, 40, { align: 'center' });
-    
-    doc.line(14, 45, 196, 45); 
+
+    doc.line(14, 45, 196, 45);
 
     doc.setFontSize(11);
     doc.setFont("helvetica", "bold");
     doc.text(`Factura de Venta POS No: ${ultimaVentaInfo.idVenta}`, 14, 55);
-    
+
     doc.setFont("helvetica", "normal");
     doc.text(`Fecha y Hora: ${ultimaVentaInfo.fecha}`, 14, 62);
     doc.text(`Cajero: ${ultimaVentaInfo.cajero}`, 14, 69);
@@ -202,7 +207,7 @@ function VentasEmpleado() {
       body: tableRows,
       startY: 90,
       theme: 'striped',
-      headStyles: { fillColor: [230, 57, 130] }, 
+      headStyles: { fillColor: [230, 57, 130] },
       styles: { halign: 'center' },
       columnStyles: { 0: { halign: 'left' } }
     });
@@ -212,9 +217,9 @@ function VentasEmpleado() {
     const valorIva = totalVenta - baseGravable;
 
     const finalY = doc.lastAutoTable ? doc.lastAutoTable.finalY + 10 : 150;
-    
+
     doc.setFont("helvetica", "normal");
-    doc.text('Subtotal (Base gravable):', 130, finalY);
+    doc.text('Subtotal:', 130, finalY);
     doc.text(`$${Math.round(baseGravable).toLocaleString('es-CO')}`, 170, finalY);
 
     doc.text('IVA (19%):', 130, finalY + 7);
@@ -264,9 +269,9 @@ function VentasEmpleado() {
       };
 
       await axios.post('http://localhost:8080/api/ventas/enviar-factura', datosFactura);
-      
+
       setCargandoCorreo(false);
-      setExitoEnvioCorreo(true); // Activamos la vista del chulo verde de éxito
+      setExitoEnvioCorreo(true);
       setEmailCliente('');
     } catch (error) {
       console.error("Error enviando correo:", error);
@@ -279,18 +284,18 @@ function VentasEmpleado() {
   return (
     <div style={{ padding: '2rem', maxWidth: '1200px', margin: '0 auto', fontFamily: 'Inter, sans-serif', position: 'relative' }}>
       <h2>Módulo de Ventas Físicas (Caja POS)</h2>
-      
+
       {exito && <div style={{ background: '#d4edda', color: '#155724', padding: '10px', borderRadius: '8px', marginBottom: '15px', fontWeight: '500' }}>{exito}</div>}
       {error && <div style={{ background: '#f8d7da', color: '#721c24', padding: '10px', borderRadius: '8px', marginBottom: '15px', fontWeight: '500' }}>{error}</div>}
 
       <div style={{ display: 'grid', gridTemplateColumns: '1.2fr 0.8fr', gap: '2rem' }}>
-        
+
         {/* COLUMNA IZQUIERDA: Buscador y Carrito */}
         <div>
           <form onSubmit={manejarBusquedaCodigo} style={{ display: 'flex', gap: '10px', marginBottom: '1.5rem' }}>
-            <input 
-              type="text" 
-              placeholder="Escanea o escribe el código de barras de la prenda..." 
+            <input
+              type="text"
+              placeholder="Escanea o escribe el código de barras de la prenda..."
               value={codigoBusqueda}
               onChange={(e) => setCodigoBusqueda(e.target.value)}
               style={{ flex: 1, padding: '10px 14px', borderRadius: '8px', border: '1px solid #ccc', outline: 'none' }}
@@ -343,12 +348,12 @@ function VentasEmpleado() {
         <div style={{ background: '#fff', padding: '1.5rem', borderRadius: '12px', boxShadow: '0 4px 12px rgba(0,0,0,0.05)', display: 'flex', flexDirection: 'column', justifyContent: 'space-between' }}>
           <form onSubmit={procesarVenta}>
             <h3>Finalizar Venta</h3>
-            
+
             <div style={{ margin: '1rem 0' }}>
               <label style={{ display: 'block', fontSize: '0.85rem', fontWeight: '600', marginBottom: '5px' }}>Correo del Cliente (Opcional)</label>
-              <input 
-                type="email" 
-                placeholder="cliente@correo.com" 
+              <input
+                type="email"
+                placeholder="cliente@correo.com"
                 value={emailCliente}
                 onChange={(e) => setEmailCliente(e.target.value)}
                 style={{ width: '100%', padding: '10px', borderRadius: '8px', border: '1px solid #ccc', boxSizing: 'border-box', outline: 'none' }}
@@ -362,8 +367,8 @@ function VentasEmpleado() {
 
             <div style={{ margin: '1rem 0' }}>
               <label style={{ display: 'block', fontSize: '0.85rem', fontWeight: '600', marginBottom: '5px' }}>Método de Pago *</label>
-              <select 
-                value={metodoPago} 
+              <select
+                value={metodoPago}
                 onChange={(e) => setMetodoPago(e.target.value)}
                 style={{ width: '100%', padding: '10px', borderRadius: '8px', border: '1px solid #ccc', boxSizing: 'border-box', outline: 'none' }}
               >
@@ -380,8 +385,8 @@ function VentasEmpleado() {
               </div>
             </div>
 
-            <button 
-              type="submit" 
+            <button
+              type="submit"
               disabled={carrito.length === 0}
               style={{
                 width: '100%',
@@ -420,7 +425,7 @@ function VentasEmpleado() {
             </p>
 
             <div style={{ display: 'flex', flexDirection: 'column', gap: '12px' }}>
-              <button 
+              <button
                 onClick={() => manejarTipoFactura('electronica')}
                 style={{
                   background: '#e63982', color: '#fff', border: 'none', padding: '12px', borderRadius: '12px',
@@ -430,7 +435,7 @@ function VentasEmpleado() {
                 ⚡ Enviar Factura (Correo)
               </button>
 
-              <button 
+              <button
                 onClick={() => manejarTipoFactura('pdf')}
                 style={{
                   background: '#7c9885', color: '#fff', border: 'none', padding: '12px', borderRadius: '12px',
@@ -441,7 +446,7 @@ function VentasEmpleado() {
               </button>
             </div>
 
-            <button 
+            <button
               onClick={() => { setMostrarModalFactura(false); setEmailCliente(''); }}
               style={{ background: 'transparent', border: 'none', color: '#888', marginTop: '1.5rem', cursor: 'pointer', fontSize: '0.85rem' }}
             >
@@ -492,7 +497,7 @@ function VentasEmpleado() {
                 <p style={{ color: '#666', fontSize: '0.9rem', marginBottom: '1.8rem' }}>
                   La factura electrónica se ha despachado correctamente al cliente.
                 </p>
-                <button 
+                <button
                   onClick={() => setMostrarModalCorreo(false)}
                   style={{
                     width: '100%', background: '#28a745', color: '#fff', border: 'none', padding: '12px',
@@ -510,9 +515,9 @@ function VentasEmpleado() {
                   Confirma o ingresa el correo electrónico al que deseas enviar la factura electrónica:
                 </p>
 
-                <input 
-                  type="email" 
-                  placeholder="correo.cliente@dominio.com" 
+                <input
+                  type="email"
+                  placeholder="correo.cliente@dominio.com"
                   value={correoInputModal}
                   onChange={(e) => setCorreoInputModal(e.target.value)}
                   required
@@ -523,7 +528,7 @@ function VentasEmpleado() {
                 />
 
                 <div style={{ display: 'flex', gap: '10px' }}>
-                  <button 
+                  <button
                     type="submit"
                     style={{
                       flex: 1, background: '#e63982', color: '#fff', border: 'none', padding: '12px', borderRadius: '12px',
@@ -533,7 +538,7 @@ function VentasEmpleado() {
                     Enviar Correo
                   </button>
 
-                  <button 
+                  <button
                     type="button"
                     onClick={() => setMostrarModalCorreo(false)}
                     style={{

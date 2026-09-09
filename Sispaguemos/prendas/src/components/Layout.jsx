@@ -44,18 +44,24 @@ function Layout() {
             </Link>
           )}
 
-          {/* Módulo integrado de proveedores y compras (Exclusivo Admin) */}
+          {/* Módulo integrado de proveedores (Exclusivo Admin) */}
           {esAdmin && (
             <Link to="/proveedores" className={`nav-item ${isActive('/proveedores') ? 'active' : ''}`}>
               Proveedores
             </Link>
           )}
-          {/* MÓDULO DE VENTAS: Exclusivo para Empleados */}
+
+          {/* MÓDULO DE VENTAS (POS): Exclusivo para Empleados */}
           {!esAdmin && (
             <Link to="/ventas" className={`nav-item ${isActive('/ventas') ? 'active' : ''}`}>
-              Ventas
+              Ventas (POS)
             </Link>
           )}
+
+          {/* MÓDULO DE CONSULTA DE VENTAS: Disponible para Admin / Empleados */}
+          <Link to="/consulta-ventas" className={`nav-item ${isActive('/consulta-ventas') ? 'active' : ''}`}>
+            Consulta de Ventas
+          </Link>
 
           {esAdmin && (
             <Link to="/pedidos" className={`nav-item ${isActive('/pedidos') ? 'active' : ''}`}>

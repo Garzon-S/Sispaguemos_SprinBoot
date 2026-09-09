@@ -5,8 +5,8 @@ import java.time.LocalDateTime;
 public class KardexDetalleDTO {
     private int numero;
     private LocalDateTime fecha;
-    private String concepto; // 'Entrada', 'Salida', 'Reposicion', etc.
-    private String documento; // Número de factura o pedido
+    private String concepto; 
+    private String documento; 
     
     // Entradas
     private int cantEntrada;
@@ -18,10 +18,15 @@ public class KardexDetalleDTO {
     private double vrUnitarioSalida;
     private double vrTotalSalida;
     
-    // Saldos
-    private int saldoCantidad;
-    private double saldoVrUnitario;
-    private double saldoTotal;
+    // Existencia Inicial (Antes del movimiento)
+    private int existenciaInicialCant;
+    private double existenciaInicialVrUnit;
+    private double existenciaInicialTotal;
+
+    // Existencia Final (Despues del movimiento)
+    private int existenciaFinalCant;
+    private double existenciaFinalVrUnit;
+    private double existenciaFinalTotal;
 
     // Getters y Setters
     public int getNumero() { return numero; }
@@ -44,10 +49,18 @@ public class KardexDetalleDTO {
     public void setVrUnitarioSalida(double vrUnitarioSalida) { this.vrUnitarioSalida = vrUnitarioSalida; }
     public double getVrTotalSalida() { return vrTotalSalida; }
     public void setVrTotalSalida(double vrTotalSalida) { this.vrTotalSalida = vrTotalSalida; }
-    public int getSaldoCantidad() { return saldoCantidad; }
-    public void setSaldoCantidad(int saldoCantidad) { this.saldoCantidad = saldoCantidad; }
-    public double getSaldoVrUnitario() { return saldoVrUnitario; }
-    public void setSaldoVrUnitario(double saldoVrUnitario) { this.saldoVrUnitario = saldoVrUnitario; }
-    public double getSaldoTotal() { return saldoTotal; }
-    public void setSaldoTotal(double saldoTotal) { this.saldoTotal = saldoTotal; }
+
+    public int getExistenciaInicialCant() { return existenciaInicialCant; }
+    public void setExistenciaInicialCant(int existenciaInicialCant) { this.existenciaInicialCant = existenciaInicialCant; }
+    public double getExistenciaInicialVrUnit() { return existenciaInicialVrUnit; }
+    public void setExistenciaInicialVrUnit(double existenciaInicialVrUnit) { this.existenciaInicialVrUnit = existenciaInicialVrUnit; }
+    public double getExistenciaInicialTotal() { return existenciaInicialTotal; }
+    public void setExistenciaInicialTotal(double existenciaInicialTotal) { this.existenciaInicialTotal = existenciaInicialTotal; }
+
+    public int getExistenciaFinalCant() { return existenciaFinalCant; }
+    public void setExistenciaFinalCant(int existenciaFinalCant) { this.existenciaFinalCant = existenciaFinalCant; }
+    public double getExistenciaFinalVrUnit() { return existenciaFinalVrUnit; }
+    public void setExistenciaFinalVrUnit(double existenciaFinalVrUnit) { this.existenciaFinalVrUnit = existenciaFinalVrUnit; }
+    public double getExistenciaFinalTotal() { return existenciaFinalTotal; }
+    public void setExistenciaFinalTotal(double existenciaFinalTotal) { this.existenciaFinalTotal = existenciaFinalTotal; }
 }

@@ -3,10 +3,12 @@ import { useNavigate } from 'react-router-dom';
 import axios from 'axios';
 import '../styles/Admin.css';
 
-const ESTADOS = ['Pendiente', 'Listo para recoger en tienda', 'Cancelado'];
+const ESTADOS = ['Pendiente', 'Listo para recoger en tienda', 'Completado', 'Vendido', 'Cancelado'];
 
 const estiloEstado = (estado) => {
   if (estado === 'Listo para recoger en tienda') return { backgroundColor: '#e4f3e5', borderColor: '#70ad75', color: '#27602c' };
+  if (estado === 'Completado') return { backgroundColor: '#e3f2fd', borderColor: '#90caf9', color: '#0d6efd' };
+  if (estado === 'Vendido') return { backgroundColor: '#d1e7dd', borderColor: '#a3cfbb', color: '#0f5132' };
   if (estado === 'Cancelado') return { backgroundColor: '#fcebea', borderColor: '#d16b5d', color: '#8d2d22' };
   return { backgroundColor: '#fff1c9', borderColor: '#e0ad35', color: '#805b0b' };
 };
@@ -106,52 +108,52 @@ export default function PedidosAdmin() {
               <tbody>
                 {pedidos.map((pedido) => (
                   <Fragment key={pedido.idPedido}>
-                  <tr>
-                    <td>#{pedido.idPedido}</td>
-                    <td>{nombreCliente(pedido.fkIdUsuarioCliente)}</td>
-                    <td>{pedido.correoCliente || 'No registrado'}</td>
-                    <td>
-                      <button type="button" className="order-detail-button" onClick={() => setPedidoExpandido(pedidoExpandido === pedido.idPedido ? null : pedido.idPedido)}>
-                        {pedido.cantidadPrendas || 0} artículo{pedido.cantidadPrendas === 1 ? '' : 's'}
-                      </button>
-                    </td>
-                    <td className="order-amount">{formatearMoneda(pedido.totalEstimado)}</td>
-                    <td>{formatearFecha(pedido.fechaPedido)}</td>
-                    <td>PayPal </td>
-                    <td>
-                      <select
-                        className={`order-status order-status-${String(pedido.estado || 'Pendiente').toLowerCase().replaceAll(' ', '-')}`}
-                        value={pedido.estado || 'Pendiente'}
-                        disabled={actualizando === pedido.idPedido}
-                        onChange={(event) => cambiarEstado(pedido.idPedido, event.target.value)}
-                        aria-label={`Estado del pedido ${pedido.idPedido}`}
-                        style={estiloEstado(pedido.estado || 'Pendiente')}
-                      >
-                        {ESTADOS.map((estado) => (
-                          <option
-                            key={estado}
-                            className={`order-option-${estado === 'Pendiente' ? 'pendiente' : estado === 'Cancelado' ? 'cancelado' : 'listo'}`}
-                          >
-                            {estado}
-                          </option>
-                        ))}
-                      </select>
-                    </td>
-                  </tr>
-                  {pedidoExpandido === pedido.idPedido && (
-                    <tr className="order-details-row">
-                      <td colSpan="8">
-                        <strong>Detalle de prendas</strong>
-                        <div className="order-details-list">
-                          {(pedido.detalles || []).map((detalle) => (
-                            <span key={detalle.idDetalle}>
-                              {detalle.cantidad}x {detalle.nombrePrenda} · Talla: {detalle.talla || 'No registrada'} · {formatearMoneda(detalle.subtotal ?? (detalle.precioUnitario * detalle.cantidad))}
-                            </span>
+                    <tr>
+                      <td>#{pedido.idPedido}</td>
+                      <td>{nombreCliente(pedido.fkIdUsuarioCliente)}</td>
+                      <td>{pedido.correoCliente || 'No registrado'}</td>
+                      <td>
+                        <button type="button" className="order-detail-button" onClick={() => setPedidoExpandido(pedidoExpandido === pedido.idPedido ? null : pedido.idPedido)}>
+                          {pedido.cantidadPrendas || 0} artículo{pedido.cantidadPrendas === 1 ? '' : 's'}
+                        </button>
+                      </td>
+                      <td className="order-amount">{formatearMoneda(pedido.totalEstimado)}</td>
+                      <td>{formatearFecha(pedido.fechaPedido)}</td>
+                      <td>PayPal </td>
+                      <td>
+                        <select
+                          className={`order-status order-status-${String(pedido.estado || 'Pendiente').toLowerCase().replaceAll(' ', '-')}`}
+                          value={pedido.estado || 'Pendiente'}
+                          disabled={actualizando === pedido.idPedido}
+                          onChange={(event) => cambiarEstado(pedido.idPedido, event.target.value)}
+                          aria-label={`Estado del pedido ${pedido.idPedido}`}
+                          style={estiloEstado(pedido.estado || 'Pendiente')}
+                        >
+                          {ESTADOS.map((estado) => (
+                            <option
+                              key={estado}
+                              className={`order-option-${estado === 'Pendiente' ? 'pendiente' : estado === 'Cancelado' ? 'cancelado' : 'listo'}`}
+                            >
+                              {estado}
+                            </option>
                           ))}
-                        </div>
+                        </select>
                       </td>
                     </tr>
-                  )}
+                    {pedidoExpandido === pedido.idPedido && (
+                      <tr className="order-details-row">
+                        <td colSpan="8">
+                          <strong>Detalle de prendas</strong>
+                          <div className="order-details-list">
+                            {(pedido.detalles || []).map((detalle) => (
+                              <span key={detalle.idDetalle}>
+                                {detalle.cantidad}x {detalle.nombrePrenda} · Talla: {detalle.talla || 'No registrada'} · {formatearMoneda(detalle.subtotal ?? (detalle.precioUnitario * detalle.cantidad))}
+                              </span>
+                            ))}
+                          </div>
+                        </td>
+                      </tr>
+                    )}
                   </Fragment>
                 ))}
               </tbody>
