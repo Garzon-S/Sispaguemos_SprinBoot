@@ -2,10 +2,13 @@ package backend.repository;
 
 import backend.model.Bodega;
 import org.springframework.data.jpa.repository.JpaRepository;
+import org.springframework.data.jpa.repository.Query;
+import org.springframework.data.repository.query.Param;
 import org.springframework.stereotype.Repository;
 
 @Repository
 public interface BodegaRepository extends JpaRepository<Bodega, Long> {
-    // Como en tu modelo Bodega, idPrenda es de tipo String, el parámetro aquí debe ser String
-    Bodega findByIdPrenda(Integer idPrenda);
+    
+    @Query(value = "SELECT * FROM stock WHERE fk_id_prenda = :idPrenda", nativeQuery = true)
+    Bodega findByIdPrenda(@Param("idPrenda") Integer idPrenda);
 }

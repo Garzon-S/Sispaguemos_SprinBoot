@@ -47,6 +47,10 @@ public class FacturaProveedor {
     @JoinColumn(name = "fk_id_usuario", nullable = false)
     private Usuario usuario;
 
+    @ManyToOne
+    @JoinColumn(name = "fk_id_stock", nullable = false)
+    private Bodega stock;
+
     @OneToMany(mappedBy = "facturaProveedor", cascade = CascadeType.ALL, orphanRemoval = true)
     private List<DetalleFacturaProveedor> detalles;
 
@@ -87,6 +91,9 @@ public class FacturaProveedor {
 
     public Usuario getUsuario() { return usuario; }
     public void setUsuario(Usuario usuario) { this.usuario = usuario; }
+
+    public Bodega getStock() { return stock; }
+    public void setStock(Bodega stock) { this.stock = stock; }
 
     public List<DetalleFacturaProveedor> getDetalles() { return detalles; }
     public void setDetalles(List<DetalleFacturaProveedor> detalles) { this.detalles = detalles; }

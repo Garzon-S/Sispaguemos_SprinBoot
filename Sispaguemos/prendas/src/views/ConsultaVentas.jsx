@@ -17,7 +17,8 @@ export default function ConsultaVentas() {
     };
 
     const ventasFiltradas = ventas.filter(v => {
-        const coincideBusqueda = String(v.idVenta).includes(busqueda) ||
+        const codigoFactura = v.codigoFactura || `FAC-${String(v.idVenta).padStart(3, '0')}`;
+        const coincideBusqueda = codigoFactura.toLowerCase().includes(busqueda.toLowerCase()) ||
             String(v.metodoPago || '').toLowerCase().includes(busqueda.toLowerCase());
         return coincideBusqueda;
     });
@@ -34,7 +35,7 @@ export default function ConsultaVentas() {
 
             <input
                 type="text"
-                placeholder="Buscar por ID de venta o método de pago..."
+                placeholder="Buscar por código de factura o método de pago..."
                 value={busqueda}
                 onChange={(e) => setBusqueda(e.target.value)}
                 style={{
@@ -54,7 +55,7 @@ export default function ConsultaVentas() {
                 <table style={{ width: '100%', borderCollapse: 'collapse', textAlign: 'left', fontSize: '0.95rem' }}>
                     <thead>
                         <tr style={{ background: '#f8f9fa', borderBottom: '2px solid #f3e7dd', color: '#5b4a56' }}>
-                            <th style={{ padding: '12px' }}>ID Venta</th>
+                            <th style={{ padding: '12px' }}>Código de factura</th>
                             <th style={{ padding: '12px' }}>Fecha</th>
                             <th style={{ padding: '12px' }}>Método de Pago</th>
                             <th style={{ padding: '12px' }}>Prendas / Artículos</th>
@@ -71,9 +72,12 @@ export default function ConsultaVentas() {
                             </tr>
                         ) : (
                             ventasFiltradas.map(v => (
+                                (() => {
+                                    const codigoFactura = v.codigoFactura || `FAC-${String(v.idVenta).padStart(3, '0')}`;
+                                    return (
                                 <Fragment key={v.idVenta}>
                                     <tr style={{ borderBottom: '1px solid #eee' }}>
-                                        <td style={{ padding: '12px', fontWeight: '600', color: '#231421' }}>#{v.idVenta}</td>
+                                        <td style={{ padding: '12px', fontWeight: '600', color: '#231421' }}>{codigoFactura}</td>
                                         <td style={{ padding: '12px', color: '#5b4a56' }}>
                                             {v.fechaVenta ? new Date(v.fechaVenta).toLocaleString() : 'N/A'}
                                         </td>
@@ -116,7 +120,7 @@ export default function ConsultaVentas() {
                                     {ventaExpandida === v.idVenta && (
                                         <tr style={{ backgroundColor: '#fdfbfa', borderBottom: '1px solid #eee' }}>
                                             <td colSpan="6" style={{ padding: '1rem 1.5rem' }}>
-                                                <strong style={{ color: '#2b1830' }}>Detalle de prendas de la venta #{v.idVenta}:</strong>
+                                                <strong style={{ color: '#2b1830' }}>Detalle de prendas de la factura {codigoFactura}:</strong>
                                                 <div style={{ marginTop: '0.5rem', display: 'flex', flexDirection: 'column', gap: '4px' }}>
                                                     {v.detalles && v.detalles.length > 0 ? (
                                                         v.detalles.map((detalle, idx) => (
@@ -134,6 +138,8 @@ export default function ConsultaVentas() {
                                         </tr>
                                     )}
                                 </Fragment>
+                                    );
+                                })()
                             ))
                         )}
                     </tbody>

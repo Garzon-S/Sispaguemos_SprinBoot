@@ -226,11 +226,11 @@ export default function UsuariosPage() {
     const termino = busqueda.toLowerCase().trim();
     if (!termino) return true;
 
-    const id = u.id ? u.id.toString() : '';
     const nombre = (u.nombreUsuario || '').toLowerCase();
     const apellido = (u.apellidoUsuario || '').toLowerCase();
+    const correo = (u.correo || '').toLowerCase();
 
-    return id.includes(termino) || nombre.includes(termino) || apellido.includes(termino);
+    return nombre.includes(termino) || apellido.includes(termino) || correo.includes(termino);
   });
 
   const inputStyle = {
@@ -390,7 +390,7 @@ export default function UsuariosPage() {
         <div style={{ display: 'flex', justifyContent: 'center', marginBottom: '1.5rem' }}>
           <input
             type="text"
-            placeholder="Buscar por ID o Nombre"
+            placeholder="Buscar por nombre o correo"
             value={busqueda}
             onChange={(e) => setBusqueda(e.target.value)}
             style={{ ...inputStyle, width: '52%', textAlign: 'center', backgroundColor: palette.soft }}
@@ -401,7 +401,6 @@ export default function UsuariosPage() {
           <table style={{ width: '100%', borderCollapse: 'collapse', textAlign: 'left', fontSize: '0.9rem', tableLayout: 'auto' }}>
             <thead>
               <tr style={{ borderBottom: `1px solid ${palette.border}`, color: palette.slate, textTransform: 'uppercase', fontSize: '0.74rem', letterSpacing: '0.06em' }}>
-                <th style={{ padding: '0.9rem 0.6rem', width: '6%' }}>ID</th>
                 <th style={{ padding: '0.9rem 0.6rem', width: '10%', textAlign: 'center' }}>Imagen</th>
                 <th style={{ padding: '0.9rem 0.8rem', width: '28%' }}>Nombre Completo</th>
                 <th style={{ padding: '0.9rem 0.8rem', width: '26%' }}>Correo</th>
@@ -415,7 +414,6 @@ export default function UsuariosPage() {
                   const isActive = u.estado === 'Activo';
                   return (
                     <tr key={u.id} style={{ borderBottom: `1px solid ${palette.soft}` }}>
-                      <td style={{ padding: '0.9rem 0.6rem', color: palette.fucsiaDark, fontWeight: '800' }}>{u.id}</td>
                       <td style={{ padding: '0.9rem 0.6rem', textAlign: 'center' }}>
                         {u.imagenPerfil ? (
                           <img src={`data:image/jpeg;base64,${u.imagenPerfil}`} alt="Perfil" style={{ width: '42px', height: '42px', borderRadius: '50%', objectFit: 'cover', border: `2px solid ${palette.border}` }} />
@@ -477,7 +475,7 @@ export default function UsuariosPage() {
                 })
               ) : (
                 <tr>
-                  <td colSpan="6" style={{ padding: '1.5rem', textAlign: 'center', color: palette.slate, fontWeight: '600' }}>
+                  <td colSpan="5" style={{ padding: '1.5rem', textAlign: 'center', color: palette.slate, fontWeight: '600' }}>
                     No se encontraron usuarios registrados
                   </td>
                 </tr>

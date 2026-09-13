@@ -4,7 +4,7 @@ import '../styles/proveedores.css';
 
 const API = 'http://localhost:8080/api';
 const emptyProvider = { nombreProveedor: '', nitProveedor: '', telefonoProveedor: '', correoProveedor: '', direccionProveedor: '' };
-const emptyInvoice = { estado: 'Recibida', idPrenda: '', cantidadPedida: 1, cantidadRecibida: 0, precioCompra: '', impuesto: 0, observaciones: '' };
+const emptyInvoice = { estado: 'Recibida', idPrenda: '', cantidadPedida: 1, cantidadRecibida: 1, precioCompra: '', impuesto: 0, observaciones: '' };
 
 const formatCurrency = (value) => new Intl.NumberFormat('es-CO', { style: 'currency', currency: 'COP', maximumFractionDigits: 0 }).format(Number(value || 0));
 const formatDate = (value) => value ? new Date(value).toLocaleDateString('es-CO') : 'Sin fecha';
@@ -75,8 +75,21 @@ export default function Proveedores() {
     }
 
     const cantidad = Number(formFactura.cantidadPedida || 0);
+    const cantidadRecibida = Number(formFactura.cantidadRecibida || 0);
     const precio = Number(formFactura.precioCompra || 0);
     const impuesto = Number(formFactura.impuesto || 0);
+    if (!Number.isInteger(cantidad) || cantidad < 1 || !Number.isInteger(cantidadRecibida) || cantidadRecibida < 0 || cantidadRecibida > cantidad) {
+      setError('Las cantidades deben ser enteros válidos y la cantidad recibida no puede superar la pedida.');
+      return;
+    }
+    if (formFactura.estado === 'Recibida' && cantidadRecibida === 0) {
+      setError('Una factura recibida debe tener al menos una unidad recibida.');
+      return;
+    }
+    if (precio < 0 || impuesto < 0) {
+      setError('El precio y el impuesto no pueden ser negativos.');
+      return;
+    }
     const subtotal = cantidad * precio;
     setGuardando(true);
     try {
@@ -90,10 +103,10 @@ export default function Proveedores() {
         usuario: { id: idUsuario },
         detalles: [{
           cantidadPedida: cantidad,
-          cantidadRecibida: Number(formFactura.cantidadRecibida || 0),
+          cantidadRecibida,
           precioCompra: precio,
           prenda: { idPrenda: prenda.idPrenda || prenda.id_prenda },
-          estado: formFactura.estado,
+          estado: cantidadRecibida === cantidad ? 'Recibida' : 'Incompleta',
         }],
       });
       setModalFactura(false);
@@ -101,7 +114,8 @@ export default function Proveedores() {
       await cargarDatos();
     } catch (requestError) {
       console.error(requestError);
-      setError('No se pudo registrar la factura.');
+      const detail = requestError.response?.data?.mensaje || requestError.response?.data?.error;
+      setError(detail ? `No se pudo registrar la factura: ${detail}` : 'No se pudo registrar la factura.');
     } finally { setGuardando(false); }
   };
 

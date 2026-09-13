@@ -38,6 +38,7 @@ public class VentaConsultaController {
         List<Map<String, Object>> resultado = ventas.stream().map(v -> {
             Map<String, Object> item = new HashMap<>();
             item.put("idVenta", v.getIdVenta());
+            item.put("codigoFactura", String.format("FAC-%03d", v.getIdVenta()));
             item.put("fechaVenta", v.getFechaVenta());
             item.put("metodoPago", v.getMetodoPago());
             item.put("totalVenta", v.getTotalVenta());

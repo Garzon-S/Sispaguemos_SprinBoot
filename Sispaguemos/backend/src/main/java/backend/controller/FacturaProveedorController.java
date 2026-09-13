@@ -61,8 +61,22 @@ public class FacturaProveedorController {
                 if (detalle.getPrenda() == null || detalle.getPrenda().getIdPrenda() == null) {
                     return ResponseEntity.badRequest().build();
                 }
+                if (detalle.getCantidadPedida() == null || detalle.getCantidadPedida() < 1
+                        || detalle.getCantidadRecibida() == null || detalle.getCantidadRecibida() < 0
+                        || detalle.getCantidadRecibida() > detalle.getCantidadPedida()
+                        || detalle.getPrecioCompra() == null || detalle.getPrecioCompra().signum() < 0) {
+                    return ResponseEntity.badRequest().build();
+                }
                 detalle.setPrenda(prendaRepository.findById(detalle.getPrenda().getIdPrenda())
                         .orElseThrow(() -> new IllegalArgumentException("La prenda no existe.")));
+                detalle.setEstado(detalle.getCantidadRecibida().equals(detalle.getCantidadPedida())
+                        ? DetalleFacturaProveedor.EstadoDetalle.Recibida
+                        : DetalleFacturaProveedor.EstadoDetalle.Incompleta);
+            }
+
+            if (FacturaProveedor.EstadoFactura.Recibida.equals(factura.getEstado())
+                    && factura.getDetalles().stream().allMatch(detalle -> detalle.getCantidadRecibida() == 0)) {
+                return ResponseEntity.badRequest().build();
             }
 
             FacturaProveedor nueva = facturaService.registrarYRecibirFactura(factura);
@@ -75,10 +89,11 @@ public class FacturaProveedorController {
                     "total", nueva.getTotal()
                 ));
         } catch (IllegalArgumentException error) {
-            return ResponseEntity.badRequest().build();
+            return ResponseEntity.badRequest().body(Map.of("mensaje", error.getMessage()));
         } catch (Exception error) {
             error.printStackTrace();
-            return ResponseEntity.internalServerError().build();
+            return ResponseEntity.internalServerError().body(Map.of("mensaje", error.getMessage() != null
+                    ? error.getMessage() : "Error interno al registrar la factura."));
         }
     }
 

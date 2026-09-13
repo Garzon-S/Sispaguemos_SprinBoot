@@ -36,6 +36,20 @@ public class FacturaProveedorService {
             aplicarRestockInventario(factura);
         }
 
+        if (factura.getStock() == null && factura.getDetalles() != null && !factura.getDetalles().isEmpty()) {
+            DetalleFacturaProveedor primerDetalle = factura.getDetalles().get(0);
+            Integer idPrenda = primerDetalle.getPrenda() != null ? primerDetalle.getPrenda().getIdPrenda() : null;
+            if (idPrenda != null) {
+                Bodega stock = bodegaRepository.findByIdPrenda(idPrenda);
+                if (stock != null) {
+                    factura.setStock(stock);
+                }
+            }
+        }
+        if (factura.getStock() == null) {
+            throw new IllegalArgumentException("La factura debe estar asociada a un stock existente.");
+        }
+
         FacturaProveedor guardada = facturaRepository.saveAndFlush(factura);
         guardada.setNumeroFactura(String.format("FAC-%06d", guardada.getIdFacturaProveedor()));
         return facturaRepository.save(guardada);
@@ -92,6 +106,9 @@ public class FacturaProveedorService {
             bodegaEncontrada.setCostoPromedio(costoPromedioNuevo);
             bodegaEncontrada.setFechaActualizacion(LocalDateTime.now());
             Bodega bodegaGuardada = bodegaRepository.saveAndFlush(bodegaEncontrada);
+            if (bodegaGuardada.getIdBodega() == null) {
+                throw new IllegalStateException("No se pudo obtener el ID del stock para la prenda " + idPrenda);
+            }
 
             MovimientoInventario movimiento = new MovimientoInventario();
             movimiento.setTipoMovimiento(MovimientoInventario.TipoMovimiento.Entrada);
